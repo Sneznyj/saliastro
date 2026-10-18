@@ -69,11 +69,14 @@
       const grid = `<div class="tbl-wrap pair-grid"><table class="asp-grid"><tr><th class="corner"><small>${esc(A.name)} ↓ · ${esc(B.name)} →</small></th>${cols.map((c) => `<th title="${esc(TX.P[c].name)}">${G[c]}</th>`).join('')}</tr>${rows.map((r) => `<tr><th title="${esc(TX.P[r].name)}">${G[r]}</th>${cols.map((c) => { const x = map.get(r + '>' + c); return x ? `<td class="${cls(x)}" data-ak="${esc(r + '>' + c)}" data-pa="${esc(r)}" data-pb="${esc(c)}" data-tip="${esc(`${A.name}: ${TX.P[r].name} ${AG[x.type]} ${B.name}: ${TX.P[c].name} · ${TX.ASP[x.type].name}, ${t('orb', 'орбис')} ${x.orb.toFixed(1)}°`)}"><span class="a">${AG[x.type]}</span><span class="o">${Math.round(x.orb)}°</span></td>` : '<td></td>'; }).join('')}</tr>`).join('')}</table></div>`;
       const listOf = (f) => all.filter((x) => (f === 'all' ? true : f === 'plus' ? soft(x) : !soft(x))).sort((a, b) => a.orb - b.orb);
       const allList = (f) => listOf(f).map((x) => `<div class="pa-row ${soft(x) ? 'plus' : 'minus'}"><span class="g">${G[x.a]} ${AG[x.type]} ${G[x.b]}</span><div><b>${esc(TX.P[x.a].name)} (${esc(A.name)}) — ${esc(TX.P[x.b].name)} (${esc(B.name)})</b> <span class="tiny muted">· ${esc(TX.ASP[x.type].name)}, ${x.orb.toFixed(1)}°</span><p class="small">${esc(UI.TX().gend(phrase(x), A.gender))}</p>${soft(x) ? '' : `<p class="small pa-fix">${icon('bulb', 'xs')} ${esc(fixOf(x))}</p>`}</div></div>`).join('') || `<p class="muted small">—</p>`;
-      box.innerHTML = `<section class="night chart-hero">
+      // проценты — всем; что соединяет, где искрит, все аспекты и двойная карта — «Плюс» (18.10.2026, Алина)
+      const hero = `<section class="night chart-hero">
           <div class="stack" style="justify-items:center;text-align:center">${ring(syn.total)}<b>${esc(A.name)} + ${esc(B.name)}</b><p class="small" style="color:#D6D4EC">${t('pair.note', 'Ориентир, а не приговор: напряжённые аспекты тоже дают притяжение и рост.')}</p></div>
           <div class="sbars">${Object.entries(syn.spheres).map(([k, v]) => `<div class="sbar"><span>${esc(SPH[k][L])}</span><div class="bar"><i style="width:${v}%"></i></div><b class="num">${v}%</b></div>`).join('')}
             <div class="sbar"><span>${t('pair.elem', 'Стихии')}</span><div class="bar"><i style="width:${syn.elemScore}%"></i></div><b class="num">${syn.elemScore}%</b></div></div>
-        </section>
+        </section>`;
+      if (root.NPlans && !root.NPlans.can('pairFull')) { box.innerHTML = hero + root.NPlans.lockHTML('pairFull'); return; }
+      box.innerHTML = hero + `
         <div class="grid2"><div class="card"><h3>${t('pair.plus', 'Что вас соединяет')}</h3><div class="items">${plus.map(row).join('') || `<p class="muted small">—</p>`}</div></div>
           <div class="card"><h3>${t('pair.minus2', 'Где будет искрить — и как вывести в плюс')}</h3><div class="items">${minus.map(row).join('') || `<p class="muted small">—</p>`}</div></div></div>
         ${raise}
@@ -90,7 +93,7 @@
       root.NWheel.linkAspects(box);
       root.NWheel.zoom(box.querySelector('.wheel-box'));
       // нажатие на аспект (клетка таблицы, линия или ☌ на колесе) — «что даёт» в синастрии (17.10, Алина)
-      root.NExplain.bindAspects(box, (a, b) => { const x = all.find((y) => y.a === a && y.b === b); if (!x) return null; const ob = cb.byId[x.b]; return { a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: 'synastry', chart: ca, bLon: ob ? ob.lon : null, labels: { in: A.name, out: B.name }, person: A }; });
+      root.NExplain.bindAspects(box, (a, b) => { const x = all.find((y) => y.a === a && y.b === b); if (!x) return null; const ob = cb.byId[x.b]; return { a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: 'synastry', chart: ca, bLon: ob ? ob.lon : null, labels: { in: A.name, out: B.name }, person: A, gate: 'pairFull' }; });
     };
     draw();
   }

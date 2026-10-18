@@ -438,7 +438,7 @@
         if (v.start > s) e = new Date(Math.min(e, v.start)); else s = new Date(Math.max(s, v.end));
       }
       if (e - s < 20 * 60000) continue;
-      out.push({ ruler: h.ruler, start: s, end: e, rank: prefs.indexOf(h.ruler) });
+      out.push({ ruler: h.ruler, start: s, end: e, rank: prefs.indexOf(h.ruler), hs: h.start, he: h.end, day: h.day, dayRuler: ph.dayRuler }); // hs/he — весь планетный час (для «подробнее»)
     }
     return out.sort((a, b) => a.rank - b.rank || a.start - b.start).slice(0, 3).sort((a, b) => a.start - b.start);
   }
@@ -454,5 +454,5 @@
     return list.map((d) => ({ day: d, r: rateBy(d, key) })).sort((a, b) => b.r.ptsF - a.r.ptsF).slice(0, n || 5);
   }
 
-  root.NScore = { SPHERES, REL, ACTIVITIES, days, scoreDay, skyEvents, bestHours, bestDays, bestBy, levelOf, levelOfPts, pointsF, rate, rateBy, activity, dayEvents, toneCurve, nature, setThresholds, ymdIn, dayStarts, significators, get THRESH() { return THRESH; } };
+  root.NScore = { SPHERES, REL, ACTIVITIES, HOUR_PREF, days, scoreDay, skyEvents, bestHours, bestDays, bestBy, levelOf, levelOfPts, pointsF, rate, rateBy, activity, dayEvents, toneCurve, nature, setThresholds, ymdIn, dayStarts, significators, get THRESH() { return THRESH; } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -81,9 +81,9 @@
       if (k === 0) { state.y = now.y; state.mo = now.mo; state.sel = now; } else { let m = state.mo + k, yy = state.y; if (m < 1) { m = 12; yy--; } if (m > 12) { m = 1; yy++; } state.y = yy; state.mo = m; state.sel = same({ y: yy, mo: m, d: now.d }, now) ? now : { y: yy, mo: m, d: 1 }; }
       drawBody(ctx); drawBackground(ctx);
     }));
-    // бесплатно — прошлый, этот и следующий месяц; дальше — тариф «Плюс»
+    // «Плюс» — этот месяц, любой другой — «Профи» (18.10.2026, Алина); без «Плюса» раздел закрыт целиком (NPlans.canPage)
     const off = (y - now.y) * 12 + (mo - now.mo);
-    if ((off > 1 || off < -1) && root.NPlans && !root.NPlans.can('calYear')) {
+    if (off !== 0 && root.NPlans && !root.NPlans.can('calYear')) {
       box.querySelector('#cal').outerHTML = root.NPlans.lockHTML('calYear', { compact: true });
       ['#dpanel', '#btyBox', '#heatBox'].forEach((s) => { const x = box.querySelector(s); if (x) x.remove(); });
       const g = box.querySelector('.grid2'); if (g) g.remove();
@@ -178,6 +178,7 @@
     box.querySelectorAll('[data-sph]').forEach((b) => b.addEventListener('click', () => root.NDay.openSphere(day, b.dataset.sph, ctx.p)));
     const bm = box.querySelector('[data-bty-more]'); if (bm) bm.addEventListener('click', () => root.NDay.openBeauty(day));
     const o = box.querySelector('[data-open-day]'); if (o) o.addEventListener('click', () => openDay(ctx, day));
+    root.NDay.bindHours(box, day, ctx.p);
     root.NWheel.bindTips(box);
   }
 
@@ -274,6 +275,13 @@
     const mon = addD(sel, -wdOf(sel));
     const sun = addD(mon, 6);
     const thisWeek = same(addD(now, -wdOf(now)), mon);
+    // неделя целиком вне этого месяца — как другой месяц: «Профи»
+    const inMonth = (c) => c.y === now.y && c.mo === now.mo;
+    if (!inMonth(mon) && !inMonth(sun) && root.NPlans && !root.NPlans.can('calYear')) {
+      box.innerHTML = `<div class="row"><button class="btn sm" type="button" data-w="0">${icon('left', 'sm')} ${t('thisWeek', 'Эта неделя')}</button></div>${root.NPlans.lockHTML('calYear', { compact: true })}`;
+      box.querySelector('[data-w]').addEventListener('click', () => { state.sel = now; state.y = now.y; state.mo = now.mo; drawBody(ctx); drawBackground(ctx); });
+      return;
+    }
     box.innerHTML = `<div class="card stack">
         <div class="cal-head"><button class="iconbtn bd" data-w="-7" aria-label="${t('prevWeek', 'Предыдущая неделя')}">${icon('left')}</button><h2>${t('week.title', 'Неделя {a}–{b}', { a: mon.mo === sun.mo ? mon.d : TX.monthDay(mon.d, mon.mo), b: TX.monthDay(sun.d, sun.mo) })}</h2><button class="iconbtn bd" data-w="7" aria-label="${t('nextWeek', 'Следующая неделя')}">${icon('right')}</button>
           ${thisWeek ? '' : `<button class="btn sm" data-w="0">${t('thisWeek', 'Эта неделя')}</button>`}<span class="spacer"></span>${legend()}</div>

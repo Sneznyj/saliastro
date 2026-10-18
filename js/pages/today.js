@@ -146,7 +146,7 @@
         <div class="stack s18">
           <section class="stack s6"><div class="row sb"><span class="label">${t('dd.spheres', 'Баллы по сферам')}</span><span class="hint-click">${icon('info', 'xs')} ${t('dd.tapSphere', 'нажми на сферу — советы и часы')}</span></div>${sphereBars(day)}</section>
           <section class="stack s6"><span class="label">${t('dd.hours', 'Сутки по часам')}</span>${dayline(day, tz, best, evs, opts.isToday)}
-            ${best.length ? `<div class="hours">${best.map((h) => `<span class="hour" data-tip="${esc(t('hour.why', 'Планетный час {p}: хорош для начинаний', { p: TX.P[h.ruler].gen }))}">${icon('clock', 'sm')} ${UI.fmtTime(h.start, tz)}–${UI.fmtTime(h.end, tz)}</span>`).join('')}</div>` : ''}</section>
+            ${best.length ? hoursMore(day, sph, best, p, tz) : ''}</section>
           <section class="stack s6"><span class="label">${t('dd.events', 'Что происходит по времени')}</span>${eventList(evs, tz, 5)}</section>
         </div>
         <div class="stack s18">
@@ -213,7 +213,7 @@
       ${evs.length ? `<section class="stack s6"><span class="label">${t('dd.keyEv', 'Главное по времени')}</span>${keyEvents(evs, 4).map((e) => evRow(e, tz, true)).join('')}</section>` : ''}
       <div class="row small" style="gap:8px">${UI.moonSVG(ms.angle, 22)}<span>${esc(TX.MOON_SIGN[ms.sign].split(':')[0])}${voc ? ` · <span style="color:var(--rose)">${t('voc.short2', 'без курса')} ${esc(voc)}</span>` : ''}</span></div>
       ${beautyRow(day, opts.key)}
-      ${best.length ? `<div class="stack s6"><span class="label">${t('bestHours', 'Лучшие часы для старта')}</span><div class="hours">${best.map((h) => `<span class="hour">${icon('clock', 'sm')} ${UI.fmtTime(h.start, tz)}–${UI.fmtTime(h.end, tz)}</span>`).join('')}</div></div>` : ''}
+      ${best.length ? `<div class="stack s6"><div class="row sb"><span class="label">${t('bestHours', 'Лучшие часы для старта')}</span><button class="linkbtn" type="button" data-hours-more="${sph}">${esc(t('hr.more', 'подробнее'))} ${icon('right', 'xs')}</button></div><div class="hours">${best.map((h) => `<span class="hour">${icon('clock', 'sm')} ${UI.fmtTime(h.start, tz)}–${UI.fmtTime(h.end, tz)}</span>`).join('')}</div></div>` : ''}
       <button class="btn primary block" type="button" data-open-day>${t('dd.open', 'Подробнее о дне')} ${icon('right', 'sm')}</button>
     </div>`;
   }
@@ -232,6 +232,52 @@
       ${down.length ? `<div class="small"><span style="color:var(--rose);font-weight:800">↓</span> ${down.map(([k, v]) => `${esc(TX.SPH[k].name)} ${v.pts}`).join(' · ')}</div>` : ''}
       ${ev.map((e) => evRow(e, tz, true)).join('')}
       <div class="rt-foot">${opts.foot || t('tip.click', 'Нажми — все подробности дня')} ›</div>`;
+  }
+
+  // ---------- лучшие часы: «подробнее» (18.10.2026, Алина) ----------
+  // каждое окно — раскрывается: что делать в этот час для этой сферы, что за час, небо в эти часы (Луна, точные аспекты), для тебя (планета часа в карте, её транзиты сегодня)
+  const HT = () => (root.NHourTexts && (root.NHourTexts[UI.lang()] || root.NHourTexts.ru)) || null;
+  function hourDetail(day, s, h, person, evs, tz) {
+    const X = HT(), TX = UI.TX(); if (!X) return '';
+    const P = TX.P[h.ruler] || { name: h.ruler, gen: h.ruler };
+    const g = (x) => (person ? TX.gend(x, person.gender) : x);
+    const ms = AC.moonState(new Date((h.start.getTime() + h.end.getTime()) / 2));
+    const inside = evs.filter((e) => e.kind !== 'vocEnd' && e.at >= h.start && e.at <= h.end);
+    const about = [];
+    if (h.dayRuler === h.ruler) about.push(X.f.dayRuler(P.gen));
+    if (h.hs && h.he && (Math.abs(h.start - h.hs) > 5 * 60000 || Math.abs(h.end - h.he) > 5 * 60000)) about.push(X.f.cut(UI.fmtTime(h.hs, tz), UI.fmtTime(h.he, tz)));
+    if (day.flags.retro.includes(h.ruler)) about.push(X.f.retro(P.name));
+    const you = [];
+    if (person) {
+      const natal = UI.chartOf(person), b = natal.byId[h.ruler];
+      if (b) {
+        you.push(b.house ? X.f.natal(P.name, TX.S[b.sign].in, b.house, TX.H[b.house].with) : X.f.natalNoH(P.name, TX.S[b.sign].in));
+        if (b.dignity === 'domicile' || b.dignity === 'exaltation') you.push(X.lbl.strong); else if (b.dignity === 'detriment' || b.dignity === 'fall') you.push(X.lbl.weak);
+      }
+      for (const e of evs.filter((x) => x.kind === 'transit' && x.T === h.ruler).slice(0, 2)) { const x = TX.evText(e, tz); you.push(e.v >= 0 ? X.f.trOk(x.short) : X.f.trBad(x.short)); }
+    }
+    return `<div class="hr-sec"><span class="label">${esc(X.lbl.what)}</span><p>${esc(g(((X.todo[s] || {})[h.ruler]) || X.ruler[h.ruler] || ''))}</p></div>
+      <div class="hr-sec"><span class="label">${esc(X.lbl.hour)}</span><p class="small">${esc(X.ruler[h.ruler] || '')}</p>${about.map((x) => `<p class="small muted">${esc(x)}</p>`).join('')}</div>
+      <div class="hr-sec"><span class="label">${esc(X.lbl.sky)}</span><p class="small hr-moon">${UI.moonSVG(ms.angle, 16)} <span>${esc(TX.MOON_SIGN[ms.sign])}</span></p>${inside.length ? inside.slice(0, 4).map((e) => evRow(e, tz, true)).join('') : `<p class="small muted">${esc(X.lbl.calm)}</p>`}</div>
+      ${you.length ? `<div class="hr-sec"><span class="label">${esc(X.lbl.you)}</span>${you.map((x) => `<p class="small">${esc(g(x))}</p>`).join('')}</div>` : ''}`;
+  }
+  /** Лучшие часы с раскрывающимся «подробнее» и пояснением, как они выбраны. */
+  function hoursMore(day, s, best, person, tz) {
+    const X = HT(), TX = UI.TX();
+    const chip = (h) => `<span class="hour">${icon('clock', 'sm')} ${UI.fmtTime(h.start, tz)}–${UI.fmtTime(h.end, tz)} · ${esc(TX.P[h.ruler].name)}</span>`;
+    if (!X) return `<div class="hours">${best.map(chip).join('')}</div>`;
+    const evs = person ? root.NCompute.dayEvents(person, day, tz) : [];
+    const list = ((NS.HOUR_PREF || {})[s] || []).map((id) => (TX.P[id] || {}).gen || id).join(', ');
+    return `<div class="hrs">${best.map((h) => `<details class="hr-d"><summary>${chip(h)}<span class="hr-more">${esc(X.lbl.more)} ${icon('down', 'xs')}</span></summary><div class="hr-body">${hourDetail(day, s, h, person, evs, tz)}</div></details>`).join('')}
+      <details class="hr-how"><summary class="small">${icon('info', 'xs')} ${esc(X.lbl.howT)}</summary><p class="small muted">${esc(X.f.how(list))}</p></details></div>`;
+  }
+  /** Кнопка «подробнее» у лучших часов в короткой панели дня — окно поверх. */
+  function bindHours(el, day, person) {
+    el.querySelectorAll('[data-hours-more]').forEach((b) => b.addEventListener('click', () => {
+      const s = b.dataset.hoursMore, here = UI.here(), best = NS.bestHours(day, s, here), X = HT();
+      UI.popup(`<div class="stack">${hoursMore(day, s, best, person, here.tz)}</div>`, { title: (X && X.lbl.moreAll) || t('bestHours', 'Лучшие часы для старта'), eyebrow: UI.fmtDate(day.y, day.mo, day.d, { weekday: 'long' }) });
+      const first = document.querySelector('.pop .hr-d'); if (first) first.open = true;
+    }));
   }
 
   // ---------- окна ----------
@@ -268,7 +314,7 @@
     const html = `<div class="stack s18">
       <div class="dp-head">${UI.ringPts(sp, 70)}<div class="stack s6"><span class="lv ${UI.lvClass(sp.level)}" style="justify-self:start">${esc(TX.LEVEL[sp.level])}</span><span class="muted small">${esc(TX.SPH[s].short)}</span></div></div>
       <div class="card stack s6">${tips.map((x) => `<div class="todo">${esc(TX.gend(x, person.gender))}</div>`).join('')}</div>
-      ${best.length ? `<div class="stack s6"><span class="label">${t('bestFor', 'Лучшие часы для этого')}</span><div class="hours">${best.map((h) => `<span class="hour">${icon('clock', 'sm')} ${UI.fmtTime(h.start, tz)}–${UI.fmtTime(h.end, tz)} · ${esc(TX.P[h.ruler].name)}</span>`).join('')}</div></div>` : ''}
+      ${best.length ? `<div class="stack s6"><span class="label">${t('bestFor', 'Лучшие часы для этого')}</span>${hoursMore(day, s, best, person, tz)}</div>` : ''}
       ${acts.length ? `<div class="stack s6"><span class="label">${t('sph.acts', 'Дела этой сферы')}</span>${acts.map(({ a, r }) => `<div class="bar5" style="grid-template-columns:22px minmax(0,1fr) 70px 28px;gap:8px"><span style="color:var(--lav-strong)">${icon(TX.ACT[a].icon, 'sm')}</span><span class="small">${esc(TX.ACT[a].name)}</span>${UI.pbar(r)}${UI.ptsBadge(r, true)}</div>`).join('')}</div>` : ''}
       <div class="card"><h3 style="margin-bottom:4px">${t('why', 'Почему так')}</h3>${reasonList(list, tz, 8)}</div>
       <a class="btn" href="#ask?topic=${s}&d=${ymd(day)}">${icon('ask')} ${t('askAbout', 'Спросить ИИ об этом')}</a>
@@ -376,6 +422,6 @@
     await fill();
   }
 
-  root.NDay = { render, panel, tipHTML, openBeauty, keyLabel, rateK, bindDay, openDay, openSphere, reasonList, keyEvents, evRow, evGlyph, evColor, importance, wheelBlock, SPH_ICON, pg, sg };
+  root.NDay = { render, panel, hoursMore, bindHours, tipHTML, openBeauty, keyLabel, rateK, bindDay, openDay, openSphere, reasonList, keyEvents, evRow, evGlyph, evColor, importance, wheelBlock, SPH_ICON, pg, sg };
   (root.NPages = root.NPages || {}).today = { render: page };
 })(window);

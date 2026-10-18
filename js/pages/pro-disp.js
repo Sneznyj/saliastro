@@ -236,7 +236,7 @@
     return out.join('');
   }
 
-  function card(c) {
+  function card(c, person) {
     if (!c.houses && st.mode === 'houses') st.mode = 'signs';
     const m = model(c, st); m.mode = st.mode;
     const sel = (k, list) => `<select class="select sm" data-dsel="${k}">${list.map(([v, n]) => `<option value="${v}" ${st[k] === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`;
@@ -245,7 +245,7 @@
       <div class="row disp-sels">${sel('set', [['10', t('disp.s10', '10 планет')], ['7', t('disp.s7', 'Септенер (7)')], ['12', t('disp.s12', '10 + узел и Хирон')]])}${sel('dig', [['dom', t('disp.dom', 'Обитель')], ['exile', t('disp.exile', 'Изгнание')], ['exalt', t('disp.exalt', 'Экзальтация')], ['fall', t('disp.fall', 'Падение')]])}${c.houses ? sel('mode', [['signs', t('disp.signs', 'Знаки')], ['houses', t('disp.houses', 'Дома')]]) : ''}</div>
       <p class="tiny muted">${esc(st.mode === 'houses' ? t('disp.hintH', 'Стрелка ведёт от дома к дому, где стоит управитель его куспида. Пунктирный кружок — управитель в своём же доме: туда сходятся цепочки. Розовые стрелки — петли. Наведи на дом — подробности.') : t('disp.hintP', 'Стрелка ведёт от планеты к её диспозитору — управителю знака, где она стоит. Пунктирный кружок — планета в своём знаке (конечный диспозитор), розовые стрелки — петли (взаимная рецепция). Наведи на значок — подробности.'))}</p>
       <div class="disp-graph">${svg(m, c, t('t.disp', 'Цепочки диспозиторов'))}</div>
-      <div class="stack disp-read">${reading(m, c)}</div>
+      <div class="stack disp-read">${!root.NPlans || root.NPlans.deepFor(person && person.id) === 'open' ? reading(m, c) : root.NPlans.deepLine(person, t('disp.deepL', 'Расшифровка цепочек диспозиторов'))}</div>
     </div>`;
   }
   /** Схема по месту на странице: ширина колонки и высота окна под заголовком карточки (и при изменении окна). */
@@ -256,8 +256,9 @@
     const m = model(c, st); m.mode = st.mode;
     g.innerHTML = svg(m, c, t('t.disp', 'Цепочки диспозиторов'), availOf(box));
   }
-  function bind(box, c) {
-    box.querySelectorAll('[data-dsel]').forEach((s) => s.addEventListener('change', () => { st[s.dataset.dsel] = s.value; box.innerHTML = card(c); bind(box, c); }));
+  function bind(box, c, person) {
+    box.querySelectorAll('[data-dsel]').forEach((s) => s.addEventListener('change', () => { st[s.dataset.dsel] = s.value; box.innerHTML = card(c, person); bind(box, c, person); }));
+    if (root.NPlans) root.NPlans.bindDeep(box, person, () => { box.innerHTML = card(c, person); bind(box, c, person); });
     refit(box, c);
     fitBox = box; fitC = c;
     if (!fitBound) { fitBound = true; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(() => { if (fitBox && document.body.contains(fitBox)) refit(fitBox, fitC); }, 150); }); }

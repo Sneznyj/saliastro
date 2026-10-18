@@ -9,7 +9,7 @@
     ['horoscope', t('nav.horo', 'Гороскоп'), 'horo', 'hot m'],
     ['today', t('nav.today', 'Сегодня'), 'today', 'm'],
     ['calendar', t('nav.calendar', 'Календарь'), 'calendar', 'm'],
-    ['chart', t('nav.chart', 'Карта'), 'chart', 'm'],
+    ['chart', t('nav.chart', 'Натальная карта'), 'chart', 'm'],
     ['pair', t('nav.pair', 'Пара'), 'pair', ''],
     ['ask', t('nav.ask', 'Спросить'), 'ask', ''],
     ['numerology', t('nav.num', 'Нумерология'), 'numbers', ''],
@@ -46,7 +46,7 @@
         <button class="iconbtn theme-tg" type="button" data-theme-tg aria-label="${t('theme.toggle', 'Сменить тему')}" title="${t('theme.toggle', 'Сменить тему')}">${icon(UI.isDark() ? 'sun' : 'moon')}</button>
         <a class="iconbtn set-lnk" href="#settings" aria-label="${t('nav.settings', 'Настройки')}">${icon('settings')}</a>
       </div></header>
-      <nav class="nav" aria-label="${t('nav', 'Разделы')}"><div class="nav-in">${NAV().map(([k, n, ic, cls]) => `<a href="#${k}" data-nav="${k}" class="${cls.split(' ').filter(Boolean).map((c) => 'nav-' + c).join(' ')}">${icon(ic)}<span>${esc(n)}</span>${cls.includes('hot') ? `<b class="hot-badge" aria-hidden="true">★</b>` : ''}</a>`).join('')}${EXTRA().map(([k, n, ic, vip]) => `<a href="#${k}" data-nav="${k}" class="nav-extra${vip === true ? ' nav-vip' : vip === 'plans' ? ' nav-plans' : ''}">${icon(ic)}<span>${esc(n)}</span>${vip === true ? '<b class="vip-badge">VIP</b>' : locked(k) ? `<b class="nav-lock" title="${esc(t('pl.lockedA', 'по подписке'))}">${icon('lock', 'xs')}</b>` : ''}</a>`).join('')}<button class="nav-more" type="button" data-more>${icon('more')}<span>${t('nav.more', 'Ещё')}</span></button></div></nav>
+      <nav class="nav" aria-label="${t('nav', 'Разделы')}"><div class="nav-in">${NAV().map(([k, n, ic, cls]) => `<a href="#${k}" data-nav="${k}" class="${cls.split(' ').filter(Boolean).map((c) => 'nav-' + c).join(' ')}">${icon(ic)}<span>${esc(n)}</span>${cls.includes('hot') ? `<b class="hot-badge" aria-hidden="true">★</b>` : ''}${locked(k) ? `<b class="nav-lock" title="${esc(t('pl.lockedA', 'по подписке'))}">${icon('lock', 'xs')}</b>` : ''}</a>`).join('')}${EXTRA().map(([k, n, ic, vip]) => `<a href="#${k}" data-nav="${k}" class="nav-extra${vip === true ? ' nav-vip' : vip === 'plans' ? ' nav-plans' : ''}">${icon(ic)}<span>${esc(n)}</span>${vip === true ? '<b class="vip-badge">VIP</b>' : locked(k) ? `<b class="nav-lock" title="${esc(t('pl.lockedA', 'по подписке'))}">${icon('lock', 'xs')}</b>` : ''}</a>`).join('')}<button class="nav-more" type="button" data-more>${icon('more')}<span>${t('nav.more', 'Ещё')}</span></button></div></nav>
       <main class="main" id="main" tabindex="-1"></main></div>`;
     const who = app.querySelector('[data-who]');
     if (who) who.addEventListener('click', openWho);

@@ -9,9 +9,15 @@
   const CFG = () => (root.NCONFIG && root.NCONFIG.plans) || {};
   const RANK = { free: 0, plus: 1, pro: 2, vip: 3 };
   const ORDER = ['free', 'plus', 'pro', 'vip'];
-  // что открывает какой тариф (минимальный)
-  const NEED = { calYear: 'plus', horoLong: 'plus', numFull: 'plus', pair: 'plus', people: 'plus', pro: 'pro', rectify: 'vip' };
-  const PAGE = { pair: 'pair', pro: 'pro' }; // разделы, закрытые целиком; ректификация показывает свой экран VIP
+  // что открывает какой тариф (минимальный). 18.10.2026 — по списку Алины:
+  //   Бесплатно — гороскоп на день, «Сегодня», небо и Луна, нумерология, проценты пары, до 3 людей в аккаунте,
+  //               профи-режим (9 типов карт, две карты) без описаний, схемы фирдарий и диспозиторов без расшифровки;
+  //   Плюс — гороскоп на неделю, месяц, год и периоды, календарь на этот месяц, натальная карта (основное), пара целиком, люди без ограничений;
+  //   Профи — описания аспектов и расшифровки в профи-режиме, натальная карта целиком (аспекты, сферы жизни, разборы), транзиты, соляр,
+  //           астрокарта, календарь на любой месяц; расшифровка транзитов, соляра, астрокарты, фирдарий и диспозиторов — одна подробная
+  //           карта в месяц (deep, см. deepFor); VIP — всё без ограничений и ректификация.
+  const NEED = { horoLong: 'plus', calendar: 'plus', chart: 'plus', pairFull: 'plus', people: 'plus', calYear: 'pro', chartFull: 'pro', proDesc: 'pro', proTools: 'pro', deep: 'pro', rectify: 'vip' };
+  const PAGE = { calendar: 'calendar', chart: 'chart' }; // разделы, закрытые целиком; ректификация показывает свой экран VIP
   const BUY = 'saliastro:buy', CUR = 'saliastro:cur', TEST = 'saliastro:planTest';
   const st = { period: 'year' };
 
@@ -50,27 +56,36 @@
   // ---------- тексты ----------
   const TAG = () => ({ free: t('pl.freeTag', 'Для знакомства'), plus: t('pl.plusTag', 'Для себя и близких'), pro: t('pl.proTag', 'Для тех, кто знает астрологию'), vip: t('pl.vipTag', 'Всё, что есть, и ректификация') });
   const FEAT = () => ({
-    free: [t('pf.f1', 'Гороскоп по знаку: день, неделя, месяц'), t('pf.f2', '«Сегодня»: баллы семи сфер и лучшие часы'), t('pf.f3', 'Календарь на этот и следующий месяц'), t('pf.f4', 'Натальная карта простым языком'), t('pf.f5', 'Нумерология: главные числа'), t('pf.f6', 'Небо и Луна, ретро и затмения'), t('pf.f7', '1 карточка без входа, до 3 — с аккаунтом')],
-    plus: [t('pf.p1', 'Календарь на год вперёд: когда что делать'), t('pf.p2', 'Совместимость пары полностью'), t('pf.p3', 'Гороскоп на год и важные периоды'), t('pf.p4', 'Вся нумерология: квадрат, матрица, чакры, личный год'), t('pf.p5', 'Сколько угодно людей и карт')],
-    pro: [t('pf.r1', 'Профи-режим: 9 типов карт и две карты рядом'), t('pf.r2', 'Транзиты, соляр, лунар, прогрессии, дирекции'), t('pf.r3', 'Фирдарии, диспозиторы, астрокартография'), t('pf.r4', 'Рабочий режим на весь экран, свои орбисы и дома'), t('pf.r5', 'Таблицы аспектов с куспидами')],
-    vip: [t('pf.v1', 'Ректификация: точное время рождения по событиям жизни'), t('pf.v2', 'Перебор по минутам, лучшие варианты и проверка на случайность'), t('pf.v3', 'Без ограничений по людям и событиям'), t('pf.v4', 'Новые инструменты — первыми'), t('pf.v5', 'Ответ поддержки — в первую очередь')],
+    free: [t('pf.f1b', 'Гороскоп на день'), t('pf.f2b', '«Сегодня»: весь день по часам и сферам'), t('pf.f6b', 'Небо и Луна'), t('pf.f5b', 'Нумерология'), t('pf.f3b', 'Совместимость пары: проценты'), t('pf.f4b', 'Профи-режим: 9 типов карт и две карты — без описаний'), t('pf.f8', 'Фирдарии и диспозиторы — схемы без расшифровки'), t('pf.f7b', 'До 3 людей в аккаунте (без входа — 1)')],
+    plus: [t('pf.p3b', 'Гороскоп на неделю, месяц, год и важные периоды'), t('pf.p1b', 'Календарь на этот месяц: когда что делать'), t('pf.p6', 'Натальная карта: колесо, планеты и главное о тебе'), t('pf.p2', 'Совместимость пары полностью'), t('pf.p5b', 'Сколько угодно людей в аккаунте')],
+    pro: [t('pf.r6', 'Описание аспектов и все расшифровки в профи-режиме'), t('pf.r7', 'Натальная карта целиком: аспекты, сферы жизни, подробные разборы'), t('pf.r8', 'Транзиты, соляр, астрокартография'), t('pf.r9', 'Подробная карта месяца: расшифровка транзитов, соляра, астрокарты, фирдарий и диспозиторов'), t('pf.r10', 'Календарь на любой месяц'), t('pf.r4', 'Рабочий режим на весь экран, свои орбисы и дома')],
+    vip: [t('pf.v1', 'Ректификация: точное время рождения по событиям жизни'), t('pf.v2', 'Перебор по минутам, лучшие варианты и проверка на случайность'), t('pf.v6', 'Подробные расшифровки без ограничений — для любых карт'), t('pf.v4', 'Новые инструменты — первыми'), t('pf.v5', 'Ответ поддержки — в первую очередь')],
   });
   const INC = () => ({ plus: t('pl.incPlus', 'Всё из «Бесплатно», и ещё:'), pro: t('pl.incPro', 'Всё из «Плюса», и ещё:'), vip: t('pl.incVip', 'Всё из «Профи», и ещё:') });
   const LOCK = () => ({
-    calYear: [t('lk.calT', 'Календарь на год вперёд'), t('lk.calP', 'Бесплатно — этот и следующий месяц. С «Плюсом» листай календарь на любой месяц и планируй заранее: отпуск, переезд, свадьбу, запуск.')],
-    horoLong: [t('lk.horoT', 'Гороскоп на год и важные периоды'), t('lk.horoP', 'День, неделя и месяц — бесплатно. Год и периоды (ретро, затмения, коридоры) для твоего знака — в «Плюсе».')],
-    numFull: [t('lk.numT', 'Вся нумерология'), t('lk.numP', 'Главные числа — бесплатно. Квадрат Пифагора, матрица судьбы, чакры, личный год и совместимость по числам — в «Плюсе».')],
-    pair: [t('lk.pairT', 'Совместимость пары'), t('lk.pairP', 'Что вас связывает, где искрит и как договориться: разбор пары по двум картам, баллы по темам и двойное колесо.')],
+    horoLong: [t('lk.horoT2', 'Гороскоп на неделю, месяц и год'), t('lk.horoP2', 'Гороскоп на день — бесплатно. Неделя, месяц, год и важные периоды (ретро, затмения, коридоры) для твоего знака — в «Плюсе».')],
+    calendar: [t('lk.calT2', 'Календарь'), t('lk.calP2', 'Когда что делать: баллы каждого дня по любви, деньгам, работе и запускам, лучшие дни месяца. Календарь на этот месяц — в «Плюсе», на любой месяц — в «Профи».')],
+    calYear: [t('lk.calT3', 'Календарь на любой месяц'), t('lk.calP3', 'С «Плюсом» — этот месяц. С «Профи» листай календарь на любой месяц вперёд и назад и планируй заранее: отпуск, переезд, свадьбу, запуск.')],
+    chart: [t('lk.chartT', 'Натальная карта'), t('lk.chartP', 'Колесо твоей карты, положения планет и главное о тебе — Солнце, Луна и Асцендент простым языком. Аспекты, сферы жизни и подробные разборы — в «Профи».')],
+    chartFull: [t('lk.chartFT', 'Натальная карта целиком'), t('lk.chartFP', 'Аспекты и что они дают, сферы жизни по домам (работа, бизнес, деньги, брак, дети, дом, машина, здоровье) и подробные разборы.')],
+    pairFull: [t('lk.pairT2', 'Совместимость полностью'), t('lk.pairP2', 'Проценты — бесплатно. Что вас связывает, где искрит и как вывести в плюс, все аспекты между вами и двойная карта — в «Плюсе».')],
     people: [t('lk.pplT', 'Больше людей'), t('lk.pplP', 'В бесплатном аккаунте — до {n} карточек. С «Плюсом» — сколько угодно: семья, друзья, клиенты.')],
+    proDesc: [t('lk.descT', 'Описание аспектов'), t('lk.descP', 'Схемы карт — бесплатно. Что даёт каждый аспект и все расшифровки в профи-режиме — в «Профи».')],
+    proTools: [t('lk.toolsT', 'Транзиты, соляр, астрокартография'), t('lk.toolsP', 'Инструменты астролога для прогноза: транзиты к карте, соляр с расшифровкой по домам, астрокартография — в «Профи».')],
+    deep: [t('lk.deepT', 'Подробная карта месяца'), t('lk.deepP', 'Расшифровка транзитов, соляра, астрокартографии, фирдарий и цепочек диспозиторов. В «Профи» — одна подробная карта в месяц, в VIP — без ограничений.')],
     pro: [t('lk.proT', 'Профи-режим'), t('lk.proP', 'Рабочее место астролога: 9 типов карт, две карты рядом, транзиты, соляр, дирекции, фирдарии, астрокартография и таблицы аспектов с куспидами.')],
     rectify: [t('lk.rectT', 'Ректификация — в VIP'), t('lk.rectP', 'Программа сверяет время рождения с событиями жизни и находит минуту, при которой они объясняются лучше всего.')],
   });
   const ROWS = () => [
-    [t('cmp.horo', 'Гороскоп: день, неделя, месяц'), 'free'], [t('cmp.horo2', 'Гороскоп: год и важные периоды'), 'plus'],
-    [t('cmp.today', '«Сегодня»: баллы сфер и лучшие часы'), 'free'], [t('cmp.cal', 'Календарь: этот и следующий месяц'), 'free'], [t('cmp.cal2', 'Календарь на любой месяц вперёд'), 'plus'],
-    [t('cmp.chart', 'Натальная карта простым языком'), 'free'], [t('cmp.sky', 'Небо и Луна'), 'free'], [t('cmp.num', 'Нумерология: главные числа'), 'free'], [t('cmp.num2', 'Нумерология целиком'), 'plus'],
-    [t('cmp.pair', 'Совместимость пары'), 'plus'], [t('cmp.people', 'Карточки людей в аккаунте'), { free: '3', plus: '∞', pro: '∞', vip: '∞' }],
-    [t('cmp.pro', 'Профи-режим: 9 типов карт, две карты'), 'pro'], [t('cmp.fird', 'Фирдарии, дирекции, астрокартография'), 'pro'],
+    [t('cmp.horoD', 'Гороскоп на день'), 'free'], [t('cmp.horo3', 'Гороскоп: неделя, месяц, год и важные периоды'), 'plus'],
+    [t('cmp.today2', '«Сегодня»: весь день по часам'), 'free'], [t('cmp.sky', 'Небо и Луна'), 'free'], [t('cmp.num3', 'Нумерология'), 'free'],
+    [t('cmp.pairPct', 'Совместимость пары: проценты'), 'free'], [t('cmp.pairFull', 'Совместимость пары: полный разбор'), 'plus'],
+    [t('cmp.calM', 'Календарь на этот месяц'), 'plus'], [t('cmp.calAny', 'Календарь на любой месяц'), 'pro'],
+    [t('cmp.chartB', 'Натальная карта: колесо, планеты, главное'), 'plus'], [t('cmp.chartF', 'Натальная карта: аспекты, сферы жизни, разборы'), 'pro'],
+    [t('cmp.proS', 'Профи-режим: 9 типов карт, две карты — схемы'), 'free'], [t('cmp.firdS', 'Фирдарии и диспозиторы — схемы'), 'free'],
+    [t('cmp.proD', 'Описание аспектов и расшифровки в профи-режиме'), 'pro'], [t('cmp.tools', 'Транзиты, соляр, астрокартография'), 'pro'],
+    [t('cmp.deep', 'Подробная расшифровка: транзиты, соляр, астрокарта, фирдарии, диспозиторы'), { free: '—', plus: '—', pro: t('cmp.oneM', '1 карта в месяц'), vip: '∞' }],
+    [t('cmp.people', 'Карточки людей в аккаунте'), { free: '3', plus: '∞', pro: '∞', vip: '∞' }],
     [t('cmp.rect', 'Ректификация времени рождения'), 'vip'],
   ];
   const fmtD = (ms) => { const d = new Date(ms); return UI.fmtDate(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
@@ -91,6 +106,11 @@
     const f = PAGE[page] || page, L = LOCK()[f] || ['', ''];
     el.innerHTML = `<div class="sec-head"><span class="eyebrow">${esc(t('pl.inPlan', 'В тарифе «{p}»', { p: NAME(need(f)) }))}</span><h1>${esc(L[0])}</h1></div>${lockHTML(f)}`;
   }
+  /** Строка-замок вместо закрытой тарифом части страницы (аспекты, расшифровки): «замок · что закрыто · в тарифе «…» ›» */
+  function lockLine(f, text) {
+    const p = need(f);
+    return `<p class="pl-lockline" data-lock="${f}">${icon('lock', 'sm')}<span>${esc(text || (LOCK()[f] || [''])[0])}</span><a href="#plans?want=${p}">${esc(t('pl.inPlanS', 'в тарифе «{p}»', { p: NAME(p) }))} ›</a></p>`;
+  }
   /** Перед действием: true — можно; иначе окно с замком */
   function gate(f) {
     if (can(f)) return true;
@@ -98,6 +118,47 @@
     body.querySelectorAll('a').forEach((a) => a.addEventListener('click', UI.closeSheet));
     return false;
   }
+
+  // ---------- «Профи»: одна подробная карта в месяц (18.10.2026, Алина) ----------
+  // Расшифровки транзитов, соляра, астрокартографии, фирдарий и цепочек диспозиторов в «Профи» — для одного человека в календарный месяц:
+  // кого открыл первым (с подтверждением), тот и «подробная карта месяца» (settings.deepMonth, синхронизируется с аккаунтом). VIP — без ограничений.
+  const monthKey = (d) => { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  function deepState() { const v = root.NStore && root.NStore.settings().deepMonth; return v && v.m === monthKey() ? v : null; }
+  /** 'open' — можно; 'pick' — можно выбрать подробной картой месяца; 'taken' — в этом месяце выбран другой человек; 'locked' — нужен «Профи». */
+  function deepFor(pid) {
+    if (!enforce()) return 'open';
+    if (!can('deep')) return 'locked';
+    if ((RANK[effId()] || 0) >= RANK.vip) return 'open';
+    const s = deepState();
+    return !s ? 'pick' : s.id === (pid || 'custom') ? 'open' : 'taken';
+  }
+  const nextMonthD = () => { const d = new Date(); return UI.fmtDate(d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear(), d.getMonth() === 11 ? 1 : d.getMonth() + 2, 1); };
+  /** Перед расшифровкой: true — можно сразу; иначе окно (замок / выбрать карту месяца / уже выбрана), после выбора — then(). */
+  function deepGate(person, then) {
+    const pid = (person && person.id) || 'custom', st = deepFor(pid);
+    if (st === 'open') return true;
+    if (st === 'locked') { gate('deep'); return false; }
+    const nm = (person && person.name) || t('pl.deepThis', 'эта карта');
+    if (st === 'taken') {
+      const s = deepState(), other = (root.NStore.person(s.id) || {}).name || s.name || '';
+      const body = UI.sheet(`<div class="stack"><p>${esc(t('pl.deepTaken', 'Подробная карта этого месяца — {n}. Следующую можно выбрать с {d}.', { n: other, d: nextMonthD() }))}</p><p class="small muted">${esc(t('pl.deepVip', 'В VIP подробные расшифровки открыты для любых карт без ограничений.'))}</p><div class="row"><a class="btn vip-btn" href="#plans?want=vip">${icon('crown', 'sm')} VIP</a><button class="btn primary" type="button" data-ok>${esc(t('ok', 'Понятно'))}</button></div></div>`, { title: t('lk.deepT', 'Подробная карта месяца') });
+      body.querySelector('[data-ok]').addEventListener('click', UI.closeSheet);
+      body.querySelectorAll('a').forEach((a) => a.addEventListener('click', UI.closeSheet));
+      return false;
+    }
+    const body = UI.sheet(`<div class="stack"><p>${esc(t('pl.deepAsk', 'Сделать «{n}» подробной картой месяца?', { n: nm }))}</p><p class="small muted">${esc(t('pl.deepAskP', 'В «Профи» — одна подробная карта в месяц: расшифровка транзитов, соляра, астрокартографии, фирдарий и диспозиторов для одного человека. Выбор действует до конца месяца, следующую карту можно выбрать с {d}.', { d: nextMonthD() }))}</p><div class="row"><button class="btn" type="button" data-no>${esc(t('cancel', 'Отмена'))}</button><button class="btn primary" type="button" data-yes>${icon('check', 'sm')} ${esc(t('pl.deepYes', 'Да, открыть расшифровку'))}</button></div></div>`, { title: t('lk.deepT', 'Подробная карта месяца') });
+    body.querySelector('[data-no]').addEventListener('click', UI.closeSheet);
+    body.querySelector('[data-yes]').addEventListener('click', () => { root.NStore.set('deepMonth', { m: monthKey(), id: pid, name: nm }); UI.closeSheet(); UI.toast(t('pl.deepOk', 'Подробная карта месяца — {n}', { n: nm })); if (then) then(); });
+    return false;
+  }
+  /** Строка на месте закрытой расшифровки (диспозиторы, соляр): кнопка «Открыть расшифровку» или замок. Пустая строка — расшифровка открыта. */
+  function deepLine(person, what) {
+    const st = deepFor((person && person.id) || 'custom');
+    if (st === 'open') return '';
+    if (st === 'locked') return lockLine('deep', what);
+    return `<p class="pl-lockline" data-deep-line>${icon('lock', 'sm')}<span>${esc(what || LOCK().deep[0])}${st === 'taken' ? ' · ' + esc(t('pl.deepTakenS', 'в этом месяце выбрана другая карта')) : ''}</span><button class="btn sm" type="button" data-deep-open>${esc(st === 'pick' ? t('pl.deepOpen', 'Открыть расшифровку') : t('pl.deepWhy', 'Подробнее'))}</button></p>`;
+  }
+  function bindDeep(box, person, after) { box.querySelectorAll('[data-deep-open]').forEach((b) => b.addEventListener('click', () => { if (deepGate(person, after) && after) after(); })); }
 
   // ---------- покупка ----------
   function savePending(o) { try { sessionStorage.setItem(BUY, JSON.stringify(Object.assign({ at: Date.now() }, o))); } catch (e) { /* пусто */ } }
@@ -250,7 +311,7 @@
     if (params.period === 'month' || params.period === 'year') st.period = params.period;
     const beta = !CFG().enforce && CFG().betaUntil;
     el.innerHTML = `<div class="sec-head pl-head"><span class="eyebrow">${esc(t('pl.eyebrow', 'Тарифы'))}</span><h1>${t('pl.h1', 'Выбери, <em>насколько глубоко</em> смотреть')}</h1>
-        <p>${esc(t('pl.lead', 'Бесплатно — гороскоп, твой день, календарь на месяц и карта простым языком. Платные тарифы открывают год вперёд, инструменты астролога и ректификацию.'))}</p></div>
+        <p>${esc(t('pl.lead2', 'Бесплатно — гороскоп на день, твой день по часам, небо и Луна, нумерология и схемы профи-режима. Платные тарифы открывают календарь, натальную карту, полную совместимость, расшифровки и ректификацию.'))}</p></div>
       ${beta ? `<div class="pl-beta">${icon('gift')} <span>${esc(t('pl.beta', 'Бета-версия: до {d} все тарифы открыты бесплатно. Оформить подписку уже можно — она начнёт работать сразу.', { d: UI.fmtDate(...CFG().betaUntil.split('-').map(Number)) }))}</span></div>` : ''}
       <div id="plStatus"></div>
       <div class="pl-ctrl"><div class="seg" role="group" aria-label="${esc(t('pl.period', 'Период'))}"><button type="button" data-per="month">${esc(t('pl.month', 'Месяц'))}</button><button type="button" data-per="year">${esc(t('pl.year', 'Год'))} <b class="pl-save">−${maxSaving()}%</b></button></div>
@@ -316,6 +377,6 @@
     if (tc) tc.addEventListener('click', () => setTimeout(() => { const i = document.getElementById('plCodeIn'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 300));
   }
 
-  root.NPlans = { can, canPage, need, gate, paywall, lockHTML, bind, peopleLimit, enforce, plan, effId, NAME, buy, resume, payDialog, redeem, settingsCard, nowHTML, money, price, RANK };
+  root.NPlans = { can, canPage, need, gate, paywall, lockHTML, lockLine, deepFor, deepGate, deepLine, bindDeep, bind, peopleLimit, enforce, plan, effId, NAME, buy, resume, payDialog, redeem, settingsCard, nowHTML, money, price, RANK };
   (root.NPages = root.NPages || {}).plans = { render, open: true };
 })(window);

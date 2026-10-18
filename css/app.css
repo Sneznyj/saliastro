@@ -2108,3 +2108,63 @@ body.pro-working .to-top{display:none}
 .pk-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .pk-row > .stack{flex:1}
 .pk-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--lav-soft);color:var(--lav-strong);flex:none}
+/* «Натальная карта» → сферы жизни по домам (18.10.2026, Алина): работа, бизнес, деньги, брак, дети, дом, машина, здоровье */
+.life-sec .life-intro{max-width:900px}
+.life{display:grid;gap:16px;padding-top:8px}
+.life-main{display:grid;gap:6px;padding:14px 16px;border-radius:var(--r);background:var(--lav-soft)}
+.life-main p{font-size:calc(15.5px*var(--fz));color:var(--ink)}
+.life-main .life-tone{font-size:calc(13.5px*var(--fz));font-weight:600}
+.life-tone.soft{color:var(--mint)} .life-tone.hard{color:var(--rose)} .life-tone.mix{color:var(--gold)}
+.life-cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.life-cols{grid-template-columns:minmax(0,1fr)}}
+.life-ruler{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start}
+.lr-g{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line-soft);font:400 calc(22px*var(--fz))/1 var(--f-glyph);color:var(--lav-strong)}
+.life-notes{color:var(--gold);font-weight:600}
+.life-ruler p.small{color:var(--ink)}
+.life-asps{display:grid;gap:0;margin-top:4px}
+.life-asps > .tiny{margin-bottom:2px}
+.life-asp{display:grid;grid-template-columns:calc(58px*var(--fz)) minmax(0,1fr);gap:8px;align-items:start;padding:8px 0;border-top:1px solid var(--line-soft)}
+.life-asp .g{font:400 calc(16px*var(--fz))/1.4 var(--f-glyph);white-space:nowrap}
+.life-asp.s .g{color:var(--mint)} .life-asp.h .g{color:var(--rose)} .life-asp.c .g{color:var(--gold)}
+.life-asp b{font-size:calc(14px*var(--fz))}
+.life-asp p{color:var(--muted);margin-top:2px}
+.life-ten{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start;padding:4px 0}
+.life-ten .g{font:400 calc(18px*var(--fz))/1.3 var(--f-glyph);color:var(--lav-strong)}
+.life-ten p{color:var(--muted)}
+.life-adv{display:grid;gap:8px;padding:14px 16px;border-radius:var(--r);background:var(--mint-soft)}
+.life-adv ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:calc(14px*var(--fz))}
+.life-adv li.caution{color:var(--rose)}
+.life-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.life-tile{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.life-tile .lt-ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--lav-soft);color:var(--lav-strong)}
+.life-tile b{display:block;font-size:calc(14.5px*var(--fz))}
+.life-tile small{display:block;color:var(--muted);font-size:calc(12.5px*var(--fz));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* строка-замок вместо закрытой тарифом части (аспекты, расшифровки) */
+.pl-lockline{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:10px 12px;border-radius:var(--r-sm);border:1px dashed var(--line-strong);background:var(--surface-2);font-size:calc(13px*var(--fz));color:var(--muted)}
+.pl-lockline .ico{color:var(--lav-strong)}
+.pl-lockline a{color:var(--lav-strong);font-weight:700;text-decoration:none;margin-left:auto}
+.pl-lockline a:hover{text-decoration:underline}
+/* лучшие часы: «подробнее» (18.10.2026, Алина) — каждое окно раскрывается */
+.hrs{display:grid;gap:8px}
+.hr-d{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.hr-d > summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:6px 8px 6px 6px}
+.hr-d > summary::-webkit-details-marker{display:none}
+.hr-d > summary:hover{background:var(--surface-2)}
+.hr-more{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:var(--lav-strong);font:700 calc(12.5px*var(--fz)) var(--f-ui)}
+.hr-more .ico{transition:transform .2s}
+.hr-d[open] > summary .hr-more .ico{transform:rotate(180deg)}
+.hr-d[open] > summary{border-bottom:1px solid var(--line-soft)}
+.hr-body{display:grid;gap:12px;padding:12px 14px 14px}
+.hr-sec{display:grid;gap:4px}
+.hr-sec p{color:var(--ink)}
+.hr-sec p.muted{color:var(--muted)}
+.hr-moon{display:flex;gap:6px;align-items:flex-start}
+.hr-moon svg{flex:none;margin-top:2px}
+.hr-how > summary{cursor:pointer;color:var(--muted);display:inline-flex;gap:6px;align-items:center;list-style:none}
+.hr-how > summary::-webkit-details-marker{display:none}
+.hr-how p{margin-top:6px}
+/* замок тарифа у разделов в нижней панели телефона — значком в углу, как ★ у гороскопа (на компьютере — справа в строке) */
+@media (max-width:979px){.nav a.nav-m{position:relative}.nav a.nav-m .nav-lock{position:absolute;top:3px;right:calc(50% - 22px);margin:0}}
+/* «Натальная карта» в нижней панели телефона — в две строки по центру */
+@media (max-width:979px){.nav a > span{text-align:center;line-height:1.08}}
+@media (max-width:700px){.life-sec .acc > summary .ac-sub{white-space:normal}}

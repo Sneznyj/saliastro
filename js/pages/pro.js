@@ -842,7 +842,7 @@
         if (!x || !root.NExplain) return;
         const bi = !!lastR.outer && !own;
         const ob = bi ? lastR.outer.points.find((y) => y.id === x.b) : null;
-        root.NExplain.aspectCard({ a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: own ? 'own' : bi ? lastR.kind : 'natal', chart: own ? (lastR.cosmoOut ? null : lastR.own.chart) : lastR.cosmoIn ? null : lastR.innerChart, bLon: ob ? ob.lon : null, labels: lastR.labels, at: lastR.at, person: lastR.p }, { x: e.clientX, y: e.clientY });
+        root.NExplain.aspectCard({ a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: own ? 'own' : bi ? lastR.kind : 'natal', chart: own ? (lastR.cosmoOut ? null : lastR.own.chart) : lastR.cosmoIn ? null : lastR.innerChart, bLon: ob ? ob.lon : null, labels: lastR.labels, at: lastR.at, person: lastR.p, gate: 'proDesc' }, { x: e.clientX, y: e.clientY });
         return;
       }
       const svg = e.target.closest('svg.nw');
@@ -993,6 +993,9 @@
   }
 
   // «Дирекции» убраны из вкладок (тип карты «Дирекции» остался), «Ректификация» — отдельный VIP-раздел в меню слева
+  // тарифы (18.10.2026, Алина): карты, две карты, таблицы, фирдарии и диспозиторы — всем (схемы); транзиты, соляр и астрокарта — «Профи»
+  const TOOL_TABS = ['acg', 'dynamics', 'solar'];
+  const tabLocked = (k) => TOOL_TABS.includes(k) && !!root.NPlans && !root.NPlans.can('proTools');
   const TABS = () => [['chart', t('pro.t.chart', 'Карта'), 'chart'], ['split', t('pro.t.split', 'Две карты'), 'split'], ['tables', t('pro.t.tables', 'Таблицы'), 'table'], ['firdaria', t('pro.t.fird', 'Фирдарии'), 'timeline'], ['acg', t('pro.t.acg', 'Астрокарта'), 'map'], ['dynamics', t('pro.t.transits', 'Транзиты'), 'chart-line'], ['solar', t('pro.t.solar', 'Соляр'), 'sun'], ['moon', t('pro.t.moon', 'Луна'), 'moon'], ['retro', t('pro.t.retro', 'Ретро'), 'retro'], ['saved', t('pro.t.saved', 'Сохранённые'), 'save']];
 
   async function page(el, params) {
@@ -1021,7 +1024,7 @@
     const redraw = (kept) => { // kept — перерисовать на месте, без прокрутки к карте
       const y = window.scrollY;
       el.innerHTML = `<div class="sec-head"><span class="eyebrow">${t('pro.eyebrow', 'Профи-режим')}</span><h1>${t('pro.title', 'Астропроцессор')}</h1></div>
-        <div class="pro-tabs hs"><button class="hs-btn" type="button" data-hsl aria-label="${t('scrollL', 'Прокрутить влево')}">${icon('left', 'sm')}</button><div class="hs-track"><div class="chips" role="tablist">${TABS().map(([k, n, ic]) => `<button class="chip" type="button" role="tab" data-tab="${k}" aria-pressed="${tab === k}">${icon(ic)} ${esc(n)}</button>`).join('')}</div></div><button class="hs-btn" type="button" data-hsr aria-label="${t('scrollR', 'Прокрутить вправо')}">${icon('right', 'sm')}</button></div>
+        <div class="pro-tabs hs"><button class="hs-btn" type="button" data-hsl aria-label="${t('scrollL', 'Прокрутить влево')}">${icon('left', 'sm')}</button><div class="hs-track"><div class="chips" role="tablist">${TABS().map(([k, n, ic]) => `<button class="chip" type="button" role="tab" data-tab="${k}" aria-pressed="${tab === k}">${icon(ic)} ${esc(n)}${tabLocked(k) ? ` ${icon('lock', 'xs')}` : ''}</button>`).join('')}</div></div><button class="hs-btn" type="button" data-hsr aria-label="${t('scrollR', 'Прокрутить вправо')}">${icon('right', 'sm')}</button></div>
         <div id="proBody"></div>`;
       el.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { if (workSlot) { workBack = false; setWork(null); } tab = b.dataset.tab; redraw(); }));
       UI.hscroll(el.querySelector('.pro-tabs'));
@@ -1032,6 +1035,7 @@
           body.innerHTML = `<p class="small muted" style="margin-bottom:12px">${t('pro.splitHint3', 'Две полностью независимые карты: у каждой свой человек или свои данные, свой тип, своя динамика и свои настройки показа.')}</p><div class="split"><div data-slot-host="left"></div><div data-slot-host="right"></div></div>`;
           mountPanel(body, 'left', true, t('pro.card1', 'Карта 1')); mountPanel(body, 'right', true, t('pro.card2', 'Карта 2'));
         } else if (tab === 'saved') savedView(body, redraw);
+        else if (tabLocked(tab)) body.innerHTML = root.NPlans.lockHTML('proTools');
         else if (root.NProMore && root.NProMore[tab]) root.NProMore[tab](body, specs.main.a && specs.main.a !== 'custom' ? root.NStore.person(specs.main.a) || p : p, { redraw, G, AG, pName, fmtLon });
       } catch (e) { console.error(e); body.innerHTML = `<p class="err">${esc(t('pro.err', 'Не получилось посчитать'))}: ${esc(e.message)}</p>`; }
       root.NWheel.bindTips(body);

@@ -81,6 +81,9 @@
    */
   function transit(e, ctx) {
     ctx = ctx || {};
+    // тарифы (18.10.2026): ctx.gate — что нужно открыть, ctx.deep — человек, для которого расшифровка идёт в «подробную карту месяца»
+    if (ctx.gate && root.NPlans && !root.NPlans.gate(ctx.gate)) return;
+    if (ctx.deep && root.NPlans && !root.NPlans.deepGate(ctx.deep, () => transit(e, Object.assign({}, ctx, { deep: null })))) return;
     const TX = UI.TX(), X = TX.trx, tz = UI.here().tz;
     if (!X) return;
     const tn = tone(e.T, e.type), n = nat(e.type);
@@ -209,6 +212,10 @@
       ${houses}
       ${kindTxt ? `<p class="ac-kind">${esc(kindTxt)}</p>` : ''}
       ${moving && root.NExplain ? `<button class="btn sm" type="button" data-acmore>${t('ac.more', 'Подробнее о транзите')}</button>` : ''}`;
+    if (info.gate && root.NPlans && !root.NPlans.can(info.gate)) {
+      card.querySelectorAll('.ac-gives, .ac-syn, .ac-sum, .ac-houses, .ac-kind, [data-acmore]').forEach((x) => x.remove());
+      card.insertAdjacentHTML('beforeend', root.NPlans.lockLine(info.gate, t('ac.lock', 'Что даёт этот аспект')));
+    }
     document.body.appendChild(card);
     const tw = card.offsetWidth, th = card.offsetHeight;
     let left = at.x - tw / 2, top = at.y + 14;
@@ -218,7 +225,7 @@
     card.style.left = left + 'px'; card.style.top = top + 'px';
     card.querySelector('[data-acx]').addEventListener('click', closeCard);
     const more = card.querySelector('[data-acmore]');
-    if (more) more.addEventListener('click', () => { const e = { T: info.b, N: info.a, type: info.type, orb: info.orb, applying: info.applying, at: info.at }; closeCard(); transit(e, { natal: info.chart, person: info.person }); });
+    if (more) more.addEventListener('click', () => { const e = { T: info.b, N: info.a, type: info.type, orb: info.orb, applying: info.applying, at: info.at }; closeCard(); transit(e, { natal: info.chart, person: info.person, gate: info.gate }); });
     const outside = (e) => { if (card && !card.contains(e.target) && !(e.target.closest && e.target.closest('td[data-ak], .nw-asp, [data-asprow]'))) closeCard(); };
     const onKey = (e) => { if (e.key === 'Escape' && card) { e.stopPropagation(); closeCard(); } };
     const onScroll = (e) => { if (card && !card.contains(e.target)) closeCard(); };

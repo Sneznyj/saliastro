@@ -20,7 +20,7 @@
     const pats = PRO.patterns(c), hs = PRO.houseStrength(c), stars = PRO.fixedStars(c), shape = PRO.jonesShape(c), rec = PRO.receptions(c);
     const asp = c.aspects.slice().sort((a, b) => a.orb - b.orb);
     body.innerHTML = `
-      <div data-disp-box>${root.NDisp.card(c)}</div>
+      <div data-disp-box>${root.NDisp.card(c, p)}</div>
       <div class="grid2">
         <div class="card stack"><h3>${t('t.shape', 'Фигуры и форма карты')}</h3>
           <p class="small">${t('t.jones', 'Форма по Джонсу')}: <b>${esc((TX.shapes || {})[shape.shape] || shape.shape)}</b></p>
@@ -34,7 +34,7 @@
         <div class="card stack"><h3>${t('t.asp', 'Все аспекты')}</h3><div class="tbl-wrap"><table class="tbl" style="min-width:0"><tbody>${asp.map((x) => `<tr class="asp-row ${aspCls(x)}"><td><span class="g">${G[x.a]} <span class="ag">${AG[x.type]}</span> ${G[x.b]}</span> ${esc(ctx.pName(x.a))} — ${esc(ctx.pName(x.b))}</td><td class="mono">${x.orb.toFixed(2)}°</td><td class="tiny">${x.applying == null ? '' : x.applying ? t('applyingS', 'сход.') : t('separatingS', 'расх.')}</td></tr>`).join('')}</tbody></table></div></div>
         <div class="card stack"><h3>${t('t.stars', 'Неподвижные звёзды')}</h3>${stars.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:0"><tbody>${stars.map((s) => `<tr><td>${esc(s.name)}</td><td><span class="g">${G[s.planet]}</span> ${esc(ctx.pName(s.planet))}</td><td class="mono">${s.orb.toFixed(2)}°</td></tr>`).join('')}</tbody></table></div>` : `<p class="muted small">${t('t.noStars', 'Тесных соединений со звёздами нет')}</p>`}</div>
       </div>`;
-    root.NDisp.bind(body.querySelector('[data-disp-box]'), c);
+    root.NDisp.bind(body.querySelector('[data-disp-box]'), c, p);
   }
 
   // ---------- Фирдарии ----------
@@ -71,6 +71,8 @@
     const c = UI.chartOf(p), TX = UI.TX(), G = Object.assign({}, ctx.G, FG);
     const now = new Date(), tz = p.place.tz;
     const f = PRO.firdaria(c, now, { nodeSubs: fdOpen.nodeSubs, deep: true });
+    // схема — всем; расшифровка периодов — «Профи» (подробная карта месяца), VIP — без ограничений (18.10.2026)
+    const deepOk = !root.NPlans || root.NPlans.deepFor(p.id) === 'open';
     const YEAR = 365.2422 * DAY;
     const t0 = c.date.getTime(), span = 75 * YEAR;
     const big = f.periods.filter((x) => x.start.getTime() - t0 < span - DAY); // ровно 75 лет — следующий цикл не берём
@@ -133,8 +135,8 @@
     const dayNote = f.unknownTime ? t('f.unknown', 'Время рождения неизвестно: порядок взят как для дневной карты.') : f.day ? t('f.day', 'Дневная карта: цикл начинается с Солнца.') : t('f.night', 'Ночная карта: цикл начинается с Луны.');
     // ---- «Сейчас»: период и подпериод с расшифровкой — под схемой ----
     const nowCard = cur ? `<div class="night fd-now"><div class="fd-now-g">
-        <div class="stack s6"><span class="eyebrow">${t('f.now', 'Сейчас')}</span><h3>${G[cur.id]} ${esc(TX.firdar[cur.id])}</h3><p class="small" style="color:var(--night-muted)">${dm(cur.start)} — ${dm(cur.end)} · ${t('fd.ages2', 'возраст {a}–{b}', { a: age(cur.start), b: age(cur.end) })}</p><p>${esc(TX.firdarLong[cur.id] || '')}</p>${natalNote(cur.id) ? `<p class="small muted">${esc(t('fd.ruler', 'Управитель периода в твоей карте: {x}', { x: natalNote(cur.id) }))}</p>` : ''}</div>
-        ${curSub ? `<div class="fd-cursub"><span class="label">${t('fd.curSub', 'Сейчас подпериод')}: ${G[cur.id]}/${G[curSub.id]} ${esc(pnm(curSub.id))} · ${dm(curSub.start)} — ${dm(curSub.end)}</span><p>${esc(subText(cur, curSub))}</p>${personal(curSub.id) ? `<p class="small">${esc(personal(curSub.id))}</p>` : ''}${doAvoid(curSub.id)}</div>` : ''}
+        <div class="stack s6"><span class="eyebrow">${t('f.now', 'Сейчас')}</span><h3>${G[cur.id]} ${esc(TX.firdar[cur.id])}</h3><p class="small" style="color:var(--night-muted)">${dm(cur.start)} — ${dm(cur.end)} · ${t('fd.ages2', 'возраст {a}–{b}', { a: age(cur.start), b: age(cur.end) })}</p>${deepOk ? `<p>${esc(TX.firdarLong[cur.id] || '')}</p>` : ''}${deepOk && natalNote(cur.id) ? `<p class="small muted">${esc(t('fd.ruler', 'Управитель периода в твоей карте: {x}', { x: natalNote(cur.id) }))}</p>` : ''}</div>
+        ${curSub ? `<div class="fd-cursub"><span class="label">${t('fd.curSub', 'Сейчас подпериод')}: ${G[cur.id]}/${G[curSub.id]} ${esc(pnm(curSub.id))} · ${dm(curSub.start)} — ${dm(curSub.end)}</span>${deepOk ? `<p>${esc(subText(cur, curSub))}</p>${personal(curSub.id) ? `<p class="small">${esc(personal(curSub.id))}</p>` : ''}${doAvoid(curSub.id)}` : ''}</div>` : ''}
       </div></div>` : '';
     body.innerHTML = `<div class="card fd-scheme" data-fdscheme>
         <div class="fds-top"><h3>${t('fd.schemeT', 'Фирдарии — схема на 75 лет')}</h3><span class="tiny muted">${dayNote}</span><span class="spacer"></span>
@@ -144,7 +146,7 @@
         <div class="fds-grid" role="list">${big.map(row).join('')}</div>
         ${yearStrip}
         <p class="tiny muted fds-hint">${icon('info', 'xs')} ${t('fd.schemeHint', 'Нажми на период или подпериод — откроется расшифровка; в окне ← → листают соседние.')}</p>
-      </div>${nowCard}`;
+      </div>${nowCard}${root.NPlans ? root.NPlans.deepLine(p, t('fd.deepL', 'Расшифровка фирдарий: что несут периоды и подпериоды')) : ''}`;
 
     // ---- окна: период (его подпериоды списком) и подпериод (расшифровка, третий уровень); ←/→ — соседние ----
     const flat = []; big.forEach((x, i) => x.subs.forEach((sb, k) => flat.push([i, k])));
@@ -171,8 +173,11 @@
       b.querySelector('[data-up]').addEventListener('click', () => openPer(i));
     }
     const act = (el, fn) => { el.addEventListener('click', fn); if (el.tagName !== 'BUTTON') el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } }); };
-    body.querySelectorAll('[data-fdp]').forEach((el) => act(el, () => openPer(+el.dataset.fdp)));
-    body.querySelectorAll('[data-fds]').forEach((el) => act(el, () => { const [i, k] = el.dataset.fds.split(':').map(Number); openSub(i, k); }));
+    const redo = () => { firdaria(body, p, ctx); root.NWheel.bindTips(body); };
+    const guard = (fn) => () => { if (!root.NPlans || root.NPlans.deepGate(p, () => { redo(); fn(); })) fn(); };
+    body.querySelectorAll('[data-fdp]').forEach((el) => act(el, guard(() => openPer(+el.dataset.fdp))));
+    body.querySelectorAll('[data-fds]').forEach((el) => act(el, guard(() => { const [i, k] = el.dataset.fds.split(':').map(Number); openSub(i, k); })));
+    if (root.NPlans) root.NPlans.bindDeep(body, p, redo);
     const fdn = body.querySelector('[data-fdn]'); if (fdn) fdn.addEventListener('change', () => { fdOpen.nodeSubs = fdn.checked; firdaria(body, p, ctx); root.NWheel.bindTips(body); });
     // подгонка — после отрисовки и ещё раз, когда загрузятся шрифты (ширина дат зависит от них)
     requestAnimationFrame(() => fdFit(body, true));
@@ -209,6 +214,7 @@
     const L = root.NACG.lines(c.date);
     const names = Object.fromEntries(Object.keys(L).map((id) => [id, ctx.pName(id)]));
     const A = root.NACG;
+    const deepOk = () => !root.NPlans || root.NPlans.deepFor(p.id) === 'open'; // линии — всем в «Профи», что они значат — подробная карта месяца
     body.innerHTML = `<div class="card stack"><div class="row sb" style="align-items:flex-start"><div class="stack s6"><div class="toggles" data-tpl></div><div class="toggles" data-tan></div></div>
           <div class="seg acg-style" role="group" aria-label="${t('acg.styleA', 'Вид карты')}">${[['auto', t('acg.auto', 'Как тема')], ['light', t('acg.light', 'Светлая')], ['dark', t('acg.dark', 'Тёмная')]].map(([k, n]) => `<button type="button" data-ast="${k}" aria-pressed="${acgView.style === k}">${esc(n)}</button>`).join('')}</div></div>
         <div class="acg-map" data-amap><div class="acg-loading">${t('acg.loading', 'Загружаю карту мира…')}</div></div>
@@ -219,6 +225,7 @@
     let lmap = null, layer = null, tiles = null, fallback = false;
     const lineInfo = (id, ang, at) => {
       const m = TX.acg[id] && TX.acg[id][ang]; if (!m) return;
+      if (root.NPlans && !root.NPlans.deepGate(p, () => { drawLists(); lineInfo(id, ang, at); })) return;
       const near = A.cityHits({ [id]: L[id] }, root.NGeo.CITIES, 4).filter((h) => h.angle === ang).slice(0, 10);
       const dist = (pt) => { if (!pt || pt.lat == null) return null; const h = A.cityHits({ [id]: L[id] }, [{ name: 'x', lat: pt.lat, lon: pt.lon }], 180).find((x) => x.angle === ang); return h ? h.km : null; };
       const dB = dist({ lat: p.place.lat, lon: p.place.lon }), dH = here.lat ? dist(here) : null;
@@ -235,8 +242,9 @@
       const hits = A.cityHits(Object.fromEntries(Object.entries(L).filter(([id]) => acgView.show.has(id))), root.NGeo.CITIES, 2.5).filter((h) => acgView.angles.has(h.angle)).slice(0, 24);
       body.querySelector('[data-tpl]').innerHTML = Object.keys(L).map((id) => `<button class="tg" data-pl="${id}" aria-pressed="${acgView.show.has(id)}" style="${acgView.show.has(id) ? `background:${A.mapColor(id, false)};border-color:${A.mapColor(id, false)};color:#fff` : ''}" title="${esc(names[id])}">${G[id]}</button>`).join('');
       body.querySelector('[data-tan]').innerHTML = ['asc', 'dsc', 'mc', 'ic'].map((a) => `<button class="tg t" data-an="${a}" aria-pressed="${acgView.angles.has(a)}">${esc(TX.angles[a])}</button>`).join('');
-      body.querySelector('[data-acities]').innerHTML = hits.length ? `<div class="items">${hits.map((h) => { const m = TX.acg[h.planet][h.angle]; return `<div class="item tap-row" data-hl="${h.planet}|${h.angle}" role="button" tabindex="0"><span class="gl" style="color:${A.mapColor(h.planet, false)}">${G[h.planet]}</span><div><h4>${esc(UI.lang() === 'en' ? h.city.nameEn : h.city.name)} · ${esc(names[h.planet])} — ${esc(TX.angles[h.angle])}</h4><p><b style="color:var(--ok)">+</b> ${esc(m.g)}. <b style="color:var(--bad)">−</b> ${esc(m.b)}.</p><div class="why">${h.km} ${t('km', 'км от линии')}</div></div></div>`; }).join('')}</div>` : `<p class="muted small">${t('acg.none', 'Рядом с линиями выбранных планет крупных городов из списка нет.')}</p>`;
-      body.querySelector('[data-amean]').innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('pt.planet', 'Планета')}</th>${['asc', 'dsc', 'mc', 'ic'].map((a) => `<th>${esc(TX.angles[a])}</th>`).join('')}</tr></thead><tbody>${[...acgView.show].map((id) => `<tr><td><span class="g">${G[id]}</span> ${esc(names[id])}</td>${['asc', 'dsc', 'mc', 'ic'].map((a) => `<td class="small tap-row" data-hl="${id}|${a}" role="button" tabindex="0"><b style="color:var(--ok)">+</b> ${esc(TX.acg[id][a].g)}<br><b style="color:var(--bad)">−</b> ${esc(TX.acg[id][a].b)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      body.querySelector('[data-acities]').innerHTML = hits.length ? `<div class="items">${hits.map((h) => { const m = TX.acg[h.planet][h.angle]; return `<div class="item tap-row" data-hl="${h.planet}|${h.angle}" role="button" tabindex="0"><span class="gl" style="color:${A.mapColor(h.planet, false)}">${G[h.planet]}</span><div><h4>${esc(UI.lang() === 'en' ? h.city.nameEn : h.city.name)} · ${esc(names[h.planet])} — ${esc(TX.angles[h.angle])}</h4>${deepOk() ? `<p><b style="color:var(--ok)">+</b> ${esc(m.g)}. <b style="color:var(--bad)">−</b> ${esc(m.b)}.</p>` : ''}<div class="why">${h.km} ${t('km', 'км от линии')}</div></div></div>`; }).join('')}</div>` : `<p class="muted small">${t('acg.none', 'Рядом с линиями выбранных планет крупных городов из списка нет.')}</p>`;
+      body.querySelector('[data-amean]').innerHTML = !deepOk() ? root.NPlans.deepLine(p, t('acg.deepL', 'Что значат линии твоей карты')) : `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('pt.planet', 'Планета')}</th>${['asc', 'dsc', 'mc', 'ic'].map((a) => `<th>${esc(TX.angles[a])}</th>`).join('')}</tr></thead><tbody>${[...acgView.show].map((id) => `<tr><td><span class="g">${G[id]}</span> ${esc(names[id])}</td>${['asc', 'dsc', 'mc', 'ic'].map((a) => `<td class="small tap-row" data-hl="${id}|${a}" role="button" tabindex="0"><b style="color:var(--ok)">+</b> ${esc(TX.acg[id][a].g)}<br><b style="color:var(--bad)">−</b> ${esc(TX.acg[id][a].b)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      if (root.NPlans) root.NPlans.bindDeep(body.querySelector('[data-amean]'), p, drawLists);
       body.querySelectorAll('[data-pl]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.pl; acgView.show.has(id) ? acgView.show.delete(id) : acgView.show.add(id); drawLists(); drawLines(); }));
       body.querySelectorAll('[data-an]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.an; acgView.angles.has(id) ? acgView.angles.delete(id) : acgView.angles.add(id); drawLists(); drawLines(); }));
       body.querySelectorAll('[data-hl]').forEach((r) => { const go = () => { const [id, a] = r.dataset.hl.split('|'); lineInfo(id, a); }; r.addEventListener('click', go); r.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); });
@@ -295,7 +303,7 @@
       <div class="card stack"><div class="row sb"><h3>${t('dyn.events', 'Транзиты в силе и впереди')}</h3><span class="hint-click">${icon('info', 'xs')} ${t('trx.tapRow', 'нажми на строку — что значит этот транзит')}</span></div>
         <div class="tbl-wrap"><table class="tbl tr-tbl"><tbody>${ev.map((e, i) => { const tn = NE.tone(e.transiting, e.type); const now = new Date(); const on = e.start <= now && e.end >= now; return `<tr class="tr-click ${tn}${on ? ' on' : ''}" data-ev="${i}" tabindex="0" role="button"><td><span class="g tr-gl">${ctx.G[e.transiting]} ${ctx.AG[e.type]} ${ctx.G[e.natal]}</span> <b>${esc(NE.phrase(e.transiting, e.natal, e.type))}</b> <span class="tiny muted">· ${esc(TX.ASP[e.type] ? TX.ASP[e.type].name : e.type)}</span><div class="tiny muted">${esc(NE.short({ T: e.transiting, type: e.type }))}</div>${(() => { const hl = NE.houseLine({ T: e.transiting, N: e.natal, type: e.type }, c, e.start <= now && e.end >= now ? now : (e.exact[0] || e.start)); return hl ? `<div class="tr-hl">${hl}</div>` : ''; })()}</td><td class="mono">${e.openStart ? '… ' : ''}${dmy(e.start)} — ${dmy(e.end)}${e.openEnd ? ' …' : ''}</td><td class="mono tiny">${e.exact.map((x) => dmy(x)).join(', ')}</td><td class="tr-more">${icon('right', 'sm')}</td></tr>`; }).join('')}</tbody></table></div></div>`;
     body.querySelectorAll('[data-ev]').forEach((r) => {
-      const open = () => { const e = ev[+r.dataset.ev]; NE.transit({ T: e.transiting, N: e.natal, type: e.type, start: e.start, end: e.end, exact: e.exact }, { natal: c, person: p }); };
+      const open = () => { const e = ev[+r.dataset.ev]; NE.transit({ T: e.transiting, N: e.natal, type: e.type, start: e.start, end: e.end, exact: e.exact }, { natal: c, person: p, deep: p }); };
       r.addEventListener('click', open); r.addEventListener('keydown', (k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); open(); } });
     });
   }

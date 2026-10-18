@@ -210,6 +210,7 @@
       ? root.NWheel.svg(toWheel(natal), { outer: { points: noAx(pts(sol)), cusps: sol.houses ? sol.houses.cusps : null }, aspects: aspSN.map((x) => Object.assign({}, x)), rot: sol.houses ? sol.houses.asc : undefined, labels: { in: t('natal', 'натал'), out: t('sol.lIn', 'соляр') }, lang: UI.lang(), label: t('sol.wheelA', 'Соляр и натал'), scale: 1.1 })
       : root.NWheel.svg(toWheel(sol), { aspects: aspSS.map((x) => Object.assign({}, x)), lang: UI.lang(), label: t('sol.wheelA1', 'Карта соляра'), scale: 1.1 }));
     const ind = indicators(sol, natal);
+    const deepOk = !root.NPlans || root.NPlans.deepFor(p.id) === 'open'; // расшифровка соляра — подробная карта месяца (18.10.2026)
     body.innerHTML = `<div class="card solar-head">
         <div class="row sb"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="iconbtn bd" type="button" data-soff="-1" aria-label="${esc(t('sol.prev', 'Предыдущий год'))}">${icon('left', 'sm')}</button><h3 class="sol-y">${esc(t('sol.title', 'Соляр {a}–{b}', { a: S.year, b: S.year + 1 }))}</h3><button class="iconbtn bd" type="button" data-soff="1" aria-label="${esc(t('sol.next', 'Следующий год'))}">${icon('right', 'sm')}</button></div>
           <div class="row" style="gap:8px"><select class="select sm" data-splace aria-label="${esc(t('pro.place', 'Место'))}"><option value="here" ${st.place !== 'birth' ? 'selected' : ''}>${esc(t('placeHome2', 'где живёт сейчас'))}</option><option value="birth" ${st.place === 'birth' ? 'selected' : ''}>${esc(t('placeBirth', 'место рождения'))}</option></select>
@@ -218,9 +219,9 @@
       </div>
       <div class="solar-grid">
         <div class="wheel-card"><div class="wheel-box" data-swheel>${wheel()}</div></div>
-        <div class="card stack sol-main"><h3>${esc(t('sol.main', 'Главное в соляре'))}</h3>${ind.map((x) => `<div class="sol-ind"><b>${esc(x.title)}</b><p>${esc(x.text || '')}</p></div>`).join('')}</div>
+        <div class="card stack sol-main"><h3>${esc(t('sol.main', 'Главное в соляре'))}</h3>${ind.map((x) => `<div class="sol-ind"><b>${esc(x.title)}</b>${deepOk ? `<p>${esc(x.text || '')}</p>` : ''}</div>`).join('')}${deepOk ? '' : root.NPlans.deepLine(p, t('sol.deepL', 'Расшифровка соляра'))}</div>
       </div>
-      <div class="card stack"><div class="row sb"><h3>${esc(t('sol.ph', 'Планеты соляра по домам'))}</h3><span class="tiny muted">${esc(t('sol.phHint', 'что даёт каждая планета в своём доме соляра'))}</span></div>${planetsByHouse(sol)}</div>
+      <div class="card stack"><div class="row sb"><h3>${esc(t('sol.ph', 'Планеты соляра по домам'))}</h3><span class="tiny muted">${esc(t('sol.phHint', 'что даёт каждая планета в своём доме соляра'))}</span></div>${deepOk ? planetsByHouse(sol) : root.NPlans.deepLine(p, t('sol.deepPh', 'Что даёт каждая планета в доме соляра'))}</div>
       <div class="card stack sol-asp-card"><div class="row sb"><h3>${esc(t('sol.asp', 'Аспекты соляра'))}</h3><span class="tiny muted">${esc(t('sol.aspHint', 'все аспекты, и минорные · нажми на клетку — что это значит'))}</span></div>${aspTables(natal, sol, aspSN, aspSS, pts, noAx)}</div>
       <div class="card stack"><div class="row sb"><h3>${esc(t('sol.sph', 'Прогноз года по сферам'))}</h3><span class="tiny muted">${esc(t('sol.sphHint', 'соляр + транзиты всего года · нажми на сферу — подробно'))}</span></div><div data-ssph><div class="sol-wait"><span class="spin"></span> ${esc(t('sol.calc', 'Считаю транзиты на весь год…'))} <b data-sprog>0%</b></div></div></div>
       <div class="card stack"><div class="row sb"><h3>${esc(t('sol.year', 'Год по месяцам'))}</h3><span class="tiny muted">${esc(t('sol.yearHint', 'баллы 1–10 по транзитам · наведи — подробности'))}</span></div><div data-smon></div><div data-sev></div></div>
@@ -240,8 +241,9 @@
       const list = own ? aspSS : aspSN, a = ae.getAttribute('data-pa'), b = ae.getAttribute('data-pb');
       const x = list.find((y) => y.a === a && y.b === b) || list.find((y) => y.a === b && y.b === a); if (!x) return;
       const ob = own ? null : sol.byId[x.b];
-      root.NExplain.aspectCard({ a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: own ? 'own' : 'solar', chart: own ? sol : natal, bLon: ob ? ob.lon : null, labels: { in: t('natal', 'натал'), out: t('sol.lIn', 'соляр') }, person: p }, { x: e.clientX, y: e.clientY });
+      root.NExplain.aspectCard({ a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: own ? 'own' : 'solar', chart: own ? sol : natal, bLon: ob ? ob.lon : null, labels: { in: t('natal', 'натал'), out: t('sol.lIn', 'соляр') }, person: p, gate: 'proDesc' }, { x: e.clientX, y: e.clientY });
     });
+    if (root.NPlans) root.NPlans.bindDeep(body, p, () => page(body, p));
     body.querySelectorAll('[data-soff]').forEach((b) => b.addEventListener('click', () => { st.off += +b.dataset.soff; st.qa = []; page(body, p); }));
     body.querySelector('[data-splace]').addEventListener('change', (e) => { st.place = e.target.value; st.qa = []; page(body, p); });
     body.querySelectorAll('[data-sov]').forEach((b) => b.addEventListener('click', () => { st.overlay = b.dataset.sov === '1'; body.querySelectorAll('[data-sov]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); body.querySelector('[data-swheel]').innerHTML = wheel(); }));
@@ -251,7 +253,7 @@
     if (!body.isConnected) return;
     const sph = spheres(S, natal, months);
     const slow = root.NCompute.slow(p, S.start, S.end);
-    const ctx = { S, natal, months, sph, slow, p };
+    const ctx = { S, natal, months, sph, slow, p, body };
     drawSpheres(body, ctx); drawMonths(body, ctx); bindAsk(body, ctx);
   }
 
@@ -294,6 +296,7 @@
     const det = box.querySelector('[data-sdet]');
     const show = (k) => {
       if (!k) { det.innerHTML = ''; return; }
+      if (root.NPlans && root.NPlans.deepFor(ctx.p.id) !== 'open') { det.innerHTML = root.NPlans.deepLine(ctx.p, t('sol.deepS', 'Прогноз года по сферам — подробно')); root.NPlans.bindDeep(det, ctx.p, () => page(ctx.body, ctx.p)); return; }
       const s = ctx.sph[k], L = lvl(s.v), sl = slowFor(k, ctx.natal, ctx.slow), tz = ctx.S.place.zone;
       det.innerHTML = `<div class="sol-det"><div class="row sb"><h4>${esc(X.sph[k].name)} · ${Math.round(s.v)}/10</h4><span class="tiny muted">${esc(t('sol.parts', 'по соляру {a} · по транзитам {b}', { a: s.solar.toFixed(1), b: s.tr.toFixed(1) }))}</span></div>
         <p class="lead">${esc(X.sph[k][L])}</p>
@@ -327,6 +330,7 @@
     const paint = () => { list.innerHTML = st.qa.map((x) => `<div class="sa-q"><b>${esc(x.q)}</b></div><div class="sa-a">${x.a}</div>`).join(''); root.NWheel.bindTips(list); };
     const go = async (q) => {
       q = String(q || '').trim(); if (!q) return;
+      if (root.NPlans && !root.NPlans.deepGate(ctx.p, () => page(body, ctx.p))) return;
       st.qa.push({ q, a: `<p class="muted"><span class="dots"><i></i><i></i><i></i></span> ${esc(t('sol.thinking', 'Смотрю соляр и транзиты…'))}</p>` }); paint();
       list.lastElementChild.scrollIntoView({ block: 'nearest', behavior: UI.reduceMotion() ? 'auto' : 'smooth' });
       let html = answer(q, ctx);

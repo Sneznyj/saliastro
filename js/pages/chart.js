@@ -81,7 +81,7 @@
       const x = cur.list.find((y) => y.a === a && y.b === b) || cur.list.find((y) => y.a === b && y.b === a);
       if (!x) return null;
       const ob = cur.outer ? cur.outer.find((y) => y.id === x.b) : null;
-      return { a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: cur.kind, chart: cur.chart, bLon: ob ? ob.lon : null, labels: cur.labels, at: cur.at, person: p };
+      return { a: x.a, b: x.b, type: x.type, orb: x.orb, applying: x.applying, kind: cur.kind, chart: cur.chart, bLon: ob ? ob.lon : null, labels: cur.labels, at: cur.at, person: p, gate: 'chartFull' };
     });
     const at = () => st.at || new Date();
     const setHint = () => { hint.textContent = { natal: t('chart.h.natal', 'Твоя карта рождения. Стрелками можно сдвигать время рождения — так проверяют точность (ректификация). В профиле ничего не меняется, пока не нажмёшь «Сохранить».'), transit: t('chart.h.transit2', 'Внутренний круг — карта рождения, внешний круг — планеты на выбранный момент. Двигай дату, часы, минуты и секунды — справа видно динамику и все транзиты; нажми на транзит — расшифровка.'), sky: t('chart.h.sky', 'Небо на выбранный момент для места, где ты сейчас ({c}) — как карта транзита в Sotis.', { c: here.name || here.tz }) }[st.mode]; };
@@ -128,7 +128,7 @@
         return;
       }
       const asp = aspList.slice(0, 14).map((a) => `<div class="pos" role="button" tabindex="0" data-asprow data-ak="${esc([a.a, a.b].sort().join('~'))}" data-pa="${esc(a.a)}" data-pb="${esc(a.b)}" style="grid-template-columns:62px minmax(0,1fr) auto"><span class="g" style="font-weight:700;color:${a.nature === 'soft' ? 'var(--at-soft)' : a.nature === 'hard' ? 'var(--at-hard)' : 'var(--at-conj)'}">${pg(a.a)}${W.ASP_G[a.type]}${VS}${pg(a.b)}</span><span class="small">${esc((TX.P[a.a] || {}).name || a.a)} — ${esc((TX.P[a.b] || {}).name || a.b)} · ${esc(TX.ASP[a.type] ? TX.ASP[a.type].name : a.type)}</span><span class="dg">${a.orb.toFixed(1)}°${a.applying != null ? (a.applying ? ' ↗' : ' ↘') : ''}</span></div>`).join('');
-      pos.innerHTML = rows + `<details${st.mode === 'transit' ? ' open' : ''}><summary class="more" style="cursor:pointer">${st.mode === 'transit' ? t('pos.aspTr', 'Аспекты транзитов к карте ({n})', { n: aspList.length }) : t('pos.asp', 'Аспекты ({n})', { n: aspList.length })}</summary><div class="poslist" style="margin-top:6px">${asp || `<p class="muted small">${t('pos.noAsp', 'Точных аспектов нет')}</p>`}</div></details>
+      pos.innerHTML = rows + (st.mode === 'natal' && !full() ? root.NPlans.lockLine('chartFull', t('pl.ll.asp', 'Аспекты карты и что они дают')) : `<details${st.mode === 'transit' ? ' open' : ''}><summary class="more" style="cursor:pointer">${st.mode === 'transit' ? t('pos.aspTr', 'Аспекты транзитов к карте ({n})', { n: aspList.length }) : t('pos.asp', 'Аспекты ({n})', { n: aspList.length })}</summary><div class="poslist" style="margin-top:6px">${asp || `<p class="muted small">${t('pos.noAsp', 'Точных аспектов нет')}</p>`}</div></details>`) + `
         ${st.mode === 'natal' ? elemBars(natal) : ''}`;
       bindPlanets(el, p, natal);
       root.NWheel.bindTips(wBox); root.NWheel.bindTips(pos); root.NWheel.linkAspects(el.querySelector('.chart-layout'));
@@ -226,6 +226,7 @@
     const rows = aspList.slice(0, 16).map((a, i) => {
       const tn = root.NExplain.tone(a.b, a.type);
       const np = TX.P[a.a] || { name: a.a };
+      if (!full()) return `<button class="trrow ${tn}" type="button" data-tr="${i}"><span class="g">${pg(a.b)}${W.ASP_G[a.type]}${VS}${pg(a.a)}</span><span class="small"><b>${esc((TX.P[a.b] || { name: a.b }).name)} — ${esc(np.name)}</b><br><span class="muted">${esc(TX.ASP[a.type] ? TX.ASP[a.type].name : a.type)}</span></span><span class="dg">${a.orb.toFixed(1)}°${a.applying != null ? (a.applying ? ' ↗' : ' ↘') : ''}</span></button>`;
       return `<button class="trrow ${tn}" type="button" data-tr="${i}"><span class="g">${pg(a.b)}${W.ASP_G[a.type]}${VS}${pg(a.a)}</span><span class="small"><b>${esc(root.NExplain.phrase(a.b, a.a, a.type))}</b><br><span class="muted">${esc(root.NExplain.short({ T: a.b, type: a.type }))}</span>${(() => { const hl = root.NExplain.houseLine({ T: a.b, N: a.a, type: a.type }, natal, mom); return hl ? `<span class="tr-hl">${hl}</span>` : ''; })()}</span><span class="dg">${a.orb.toFixed(1)}°${a.applying != null ? (a.applying ? ' ↗' : ' ↘') : ''}</span></button>`;
     }).join('');
     return `<div class="stack s6"><div class="row sb"><span class="label">${t('dyn.nearT', 'Динамика вокруг даты')}</span><span class="tiny muted">${t('dyn.nearHint', 'нажми на день — перейти')}</span></div>
@@ -239,6 +240,7 @@
   function bindDyn(el, p, natal, list, mom) {
     el.querySelectorAll('#posBox [data-tr]').forEach((b) => b.addEventListener('click', () => {
       const a = list[+b.dataset.tr];
+      if (root.NPlans && !root.NPlans.gate('chartFull')) return;
       root.NExplain.transit({ T: a.b, N: a.a, type: a.type, orb: a.orb, applying: a.applying, at: mom }, { natal, person: p });
     }));
     el.querySelectorAll('#posBox [data-sd]').forEach((g) => g.addEventListener('click', () => {
@@ -276,7 +278,7 @@
       const h = natal.houses ? AC.houseOf(b.lon, natal.houses.cusps) : null;
       UI.sheet(`<div class="stack s18"><div class="row"><span class="g" style="font-size:calc(34px*var(--fz));color:var(--w-planet2)">${pg(id)}</span><div><b>${esc(T.P[id].name)} ${esc(T.S[b.sign].in)}</b><p class="small muted">${fmtLon(b.lon)} ${sg(b.lon)}${b.retro ? ' · ' + t('retro', 'ретроградный') : ''}${h ? ' · ' + t('pl.inYourHouse', 'в твоём {n} доме', { n: h }) : ''}</p></div></div>
         ${h ? `<div class="card soft small">${esc(t('pl.trHouse', 'Пока {p} идёт по твоему {n} дому, его темы — {a}.', { p: T.P[id].name, n: h, a: T.H[h].area }))}</div>` : ''}
-        <div class="stack s6"><span class="label">${t('pl.trAsp', 'Аспекты к твоей карте')}</span>${asp.length ? asp.map((a) => { const e = { kind: 'transit', T: id, N: a.a, type: a.type, v: root.NScore.nature(id, a.type) }; const x = T.evText(e, UI.here().tz); return `<div class="ev" style="grid-template-columns:62px minmax(0,1fr)"><span class="gly ${e.v > 0 ? 'ok' : 'bad'}">${pg(id)}${W.ASP_G[a.type]}${VS}${pg(a.a)}</span><div><b>${esc(x.title)}</b><p>${esc(x.text)} ${t('orb', 'орбис')} ${a.orb.toFixed(1)}°</p></div></div>`; }).join('') : `<p class="muted small">${t('pos.noAsp', 'Точных аспектов нет')}</p>`}</div></div>`, { title: T.P[id].name, eyebrow: t('transit', 'транзит') });
+        <div class="stack s6"><span class="label">${t('pl.trAsp', 'Аспекты к твоей карте')}</span>${!full() ? root.NPlans.lockLine('chartFull', t('pl.ll.trAsp', 'Что дают транзиты к твоей карте')) : asp.length ? asp.map((a) => { const e = { kind: 'transit', T: id, N: a.a, type: a.type, v: root.NScore.nature(id, a.type) }; const x = T.evText(e, UI.here().tz); return `<div class="ev" style="grid-template-columns:62px minmax(0,1fr)"><span class="gly ${e.v > 0 ? 'ok' : 'bad'}">${pg(id)}${W.ASP_G[a.type]}${VS}${pg(a.a)}</span><div><b>${esc(x.title)}</b><p>${esc(x.text)} ${t('orb', 'орбис')} ${a.orb.toFixed(1)}°</p></div></div>`; }).join('') : `<p class="muted small">${t('pos.noAsp', 'Точных аспектов нет')}</p>`}</div></div>`, { title: T.P[id].name, eyebrow: t('transit', 'транзит') });
       return;
     }
     const b = natal.byId[id]; if (!b) return;
@@ -289,11 +291,13 @@
     const pairText = (a, c, soft) => { const x = T.pairs && T.pairs[[a, c].sort().join('|')]; return x ? (soft ? x.s : x.h) : (T.pairGeneric ? T.pairGeneric(a, c, soft) : ''); };
     UI.sheet(`<div class="stack s18"><div class="row"><span class="g" style="font-size:calc(34px*var(--fz));color:var(--lav-strong)">${pg(id)}</span><div><b>${esc(T.P[id].name)} ${esc(T.S[sign].in)}${b.house ? ' · ' + t('pl.house', '{n} дом', { n: b.house }) : ''}</b><p class="small muted">${fmtLon(b.lon)} ${sg(b.lon)}${b.retro ? ' · ' + t('retro', 'ретроградный') : ''}${b.dignity && T.dignity ? ' · ' + esc(T.dignity[b.dignity].split(' — ')[0]) : ''}</p></div></div>
       <div class="card soft stack s6"><span class="label">${esc(T.P[id].short || '')}</span><p>${esc(T.gend(text, p.gender))}</p>${b.house ? `<p class="small muted">${esc(t('pl.houseTxt', 'В {n} доме: {w}.', { n: b.house, w: T.H[b.house].where }))}</p>` : ''}</div>
-      ${asp.length ? `<div class="stack s6"><span class="label">${t('pl.asp', 'Связи с другими планетами')}</span>${asp.map((a) => { const o = a.a === id ? a.b : a.a; const soft = a.nature === 'soft' || (a.type === 'conj' && ['venus', 'jupiter', 'sun', 'moon', 'mercury'].includes(o)); return `<div class="ev" style="grid-template-columns:62px minmax(0,1fr)"><span class="gly ${a.type === 'conj' ? 'acc' : soft ? 'ok' : 'bad'}">${pg(id)}${W.ASP_G[a.type]}${VS}${pg(o)}</span><div><b>${esc(T.P[id].name)} ${W.ASP_G[a.type]}${VS} ${esc((T.P[o] || {}).name || o)}</b><p>${esc(T.gend(pairText(id, o, soft) || '', p.gender))}</p><div class="ctx">${esc(T.ASP[a.type] ? T.ASP[a.type].name : a.type)}, ${t('orb', 'орбис')} ${a.orb.toFixed(1)}°</div></div></div>`; }).join('')}</div>` : ''}
+      ${asp.length && !full() ? `<div class="stack s6"><span class="label">${t('pl.asp', 'Связи с другими планетами')}</span>${root.NPlans.lockLine('chartFull', t('pl.ll.plAsp', 'Аспекты планеты и что они дают'))}</div>` : asp.length ? `<div class="stack s6"><span class="label">${t('pl.asp', 'Связи с другими планетами')}</span>${asp.map((a) => { const o = a.a === id ? a.b : a.a; const soft = a.nature === 'soft' || (a.type === 'conj' && ['venus', 'jupiter', 'sun', 'moon', 'mercury'].includes(o)); return `<div class="ev" style="grid-template-columns:62px minmax(0,1fr)"><span class="gly ${a.type === 'conj' ? 'acc' : soft ? 'ok' : 'bad'}">${pg(id)}${W.ASP_G[a.type]}${VS}${pg(o)}</span><div><b>${esc(T.P[id].name)} ${W.ASP_G[a.type]}${VS} ${esc((T.P[o] || {}).name || o)}</b><p>${esc(T.gend(pairText(id, o, soft) || '', p.gender))}</p><div class="ctx">${esc(T.ASP[a.type] ? T.ASP[a.type].name : a.type)}, ${t('orb', 'орбис')} ${a.orb.toFixed(1)}°</div></div></div>`; }).join('')}</div>` : ''}
       <a class="btn" href="#ask?topic=natal">${icon('ask')} ${t('chart.ask', 'Спросить о карте')}</a></div>`, { title: T.P[id].name, eyebrow: p.name });
   }
 
-  // главное о себе + свёрнутые разборы
+  // главное о себе + сферы жизни по домам + свёрнутые разборы
+  // тариф «Плюс» — основное (колесо, положения, Солнце · Луна · Асцендент); «Профи» — аспекты, сферы жизни и подробные разборы (18.10, Алина)
+  const full = () => !root.NPlans || root.NPlans.can('chartFull');
   function drawPortrait(el, p, chart) {
     const box = el.querySelector('#portrait'); if (!box) return;
     const portrait = root.NPortrait.build(chart, UI.lang(), p.gender);
@@ -304,11 +308,44 @@
     box.innerHTML = `
       <section class="card pad-lg stack s18"><div class="row sb"><h2>${t('chart.main', 'Главное о тебе')}</h2><span class="tag gold">${t('chart.big3', 'Солнце · Луна · Асцендент')}</span></div>
         <div class="grid3">${big.items.map((i) => `<div class="b3" style="grid-template-columns:52px minmax(0,1fr)"><span class="gl">${i.glyph === 'AC' ? '<span style="font:800 calc(14px*var(--fz)) var(--f-ui)">AC</span>' : esc(i.glyph)}<small>${esc(i.sign)}</small></span><div class="stack s6"><span class="label">${esc(i.label)}</span><b>${esc(i.title)}</b><p>${esc(i.text)}</p><div class="todo">${esc(i.todo)}</div></div></div>`).join('')}</div></section>
+      ${lifeHTML(p, chart)}
       <div class="stack" style="gap:10px">
-        <div class="row sb"><h2>${t('chart.more', 'Подробные разборы')}</h2><span class="hint-click">${icon('info', 'xs')} ${t('chart.moreHint', 'нажми на раздел, чтобы раскрыть')}</span></div>
+        <div class="row sb"><h2>${t('chart.more', 'Подробные разборы')}</h2>${full() ? `<span class="hint-click">${icon('info', 'xs')} ${t('chart.moreHint', 'нажми на раздел, чтобы раскрыть')}</span>` : ''}</div>
+        ${!full() ? root.NPlans.lockLine('chartFull', [t('chart.growth', 'Над чем работать')].concat(rest.map((s) => s.title)).join(' · ')) : `
         ${big.items.length ? UI.acc({ title: t('chart.growth', 'Над чем работать'), sub: big.items.map((i) => i.label).join(' · '), icon: '☉︎', body: `<div class="items">${big.items.map((i) => `<div class="item minus"><span class="gl">${i.glyph === 'AC' ? 'AC' : esc(i.glyph)}</span><div><h4>${esc(i.label)}</h4><p>${esc(i.minus)}</p><div class="why">${esc(i.why)}</div></div></div>`).join('')}</div>` }) : ''}
-        ${rest.map((s) => UI.acc({ title: s.title, sub: s.items.slice(0, 3).map((i) => i.title).join(' · ') + (s.items.length > 3 ? ` · +${s.items.length - 3}` : ''), icon: `<span style="font:${ICON[s.id] === 'AC' ? '800 13px var(--f-ui)' : '400 18px var(--f-glyph)'}">${ICON[s.id] || '✦'}</span>`, body: itemsHTML(s.items) })).join('')}
+        ${rest.map((s) => UI.acc({ title: s.title, sub: s.items.slice(0, 3).map((i) => i.title).join(' · ') + (s.items.length > 3 ? ` · +${s.items.length - 3}` : ''), icon: `<span style="font:${ICON[s.id] === 'AC' ? '800 13px var(--f-ui)' : '400 18px var(--f-glyph)'}">${ICON[s.id] || '✦'}</span>`, body: itemsHTML(s.items) })).join('')}`}
       </div>`;
+  }
+
+  // ---------- сферы жизни по домам (18.10.2026, Алина): работа, бизнес, деньги, брак, дети, дом, машина, здоровье ----------
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+  function lifeHTML(p, chart) {
+    if (!root.NLife || !root.NLifeTexts) return '';
+    const r = root.NLife.build(chart, UI.lang(), p.gender);
+    const L = (root.NLifeTexts[UI.lang()] || root.NLifeTexts.ru).lbl;
+    const head = `<div class="row sb"><h2>${esc(L.h2)}</h2>${r.ok && full() ? `<span class="hint-click">${icon('info', 'xs')} ${esc(L.hint)}</span>` : ''}</div><p class="small muted life-intro">${esc(L.lead)}</p>`;
+    if (!r.ok) return `<section class="stack life-sec">${head}<div class="card soft small">${esc(L.noTime)}</div></section>`;
+    if (!full()) {
+      return `<section class="stack life-sec">${head}<div class="life-tiles">${r.topics.map((tp) => `<div class="life-tile"><span class="lt-ic">${icon(tp.icon)}</span><div style="min-width:0"><b>${esc(tp.title)}</b><small>${esc(tp.summary)}</small></div></div>`).join('')}</div>${root.NPlans.lockHTML('chartFull', { compact: true })}</section>`;
+    }
+    return `<section class="stack life-sec" style="gap:10px">${head}${r.topics.map((tp) => UI.acc({ id: 'life-' + tp.id, title: tp.title, sub: tp.summary || tp.what, icon: icon(tp.icon), body: lifeBody(tp, L, r.f) })).join('')}</section>`;
+  }
+  function lifeBody(tp, L, F) {
+    const asp = (a) => `<div class="life-asp ${a.n}"><span class="g">${esc(a.glyph)}</span><div style="min-width:0"><b>${esc(a.name)}</b> <span class="tiny muted">${esc(a.aspName)} · ${a.orb.toFixed(1)}°${a.rules.length ? ' · ' + esc(F.rules(a.rules)) : ''}${a.house ? ' · ' + esc(F.inH(a.house)) : ''}</span><p class="small">${esc(cap(a.text))}.${a.connect ? ' ' + esc(a.connect) : ''}</p></div></div>`;
+    const ruler = (r, i) => `<div class="life-ruler"><span class="lr-g">${esc(r.glyph)}</span><div class="stack s6" style="min-width:0"><span class="label">${esc(i ? L.coRuler : L.ruler)}</span><b>${esc(r.head)}</b>${r.notes.length ? `<span class="tiny life-notes">${esc(r.notes.join(' · '))}</span>` : ''}<p class="small">${esc(r.text)} ${esc(r.houseText)}</p>
+      ${r.asps.length ? `<div class="life-asps"><span class="tiny muted">${esc(L.aspects)}</span>${r.asps.map(asp).join('')}</div>` : `<p class="tiny muted">${esc(L.noAsp)}</p>`}</div></div>`;
+    const tenants = tp.tenants.length ? tp.tenants.map((x) => `<div class="life-ten"><span class="g">${esc(x.glyph)}</span><div style="min-width:0"><b>${esc(x.head)}</b><p class="small">${esc(x.text)}</p></div></div>`).join('') : `<p class="small muted">${esc(L.noTenants)}</p>`;
+    return `<div class="life">
+      <div class="life-main"><span class="label">${esc(L.main)} · ${esc(F.houseN(tp.house))} · ${esc(tp.signName)}</span><p>${esc(tp.lead)}</p>${tp.toneText ? `<p class="life-tone ${tp.tone}">${esc(tp.toneText)}</p>` : ''}</div>
+      <div class="life-cols">
+        <div class="stack s18">${tp.rulers.map(ruler).join('')}</div>
+        <div class="stack s18">
+          <div class="stack s6"><span class="label">${esc(L.tenants)}</span>${tenants}</div>
+          ${tp.extras.map((x) => `<div class="stack s6 life-x"><span class="label">${esc(x.label)}</span><p class="small">${esc(x.text)}</p></div>`).join('')}
+          <div class="life-adv"><span class="label">${esc(tp.adviceTitle)}</span><ul>${tp.advice.map((x) => `<li>${esc(x)}</li>`).join('')}${tp.cautions.map((x) => `<li class="caution">${esc(x)}</li>`).join('')}</ul></div>
+          ${tp.note ? `<p class="tiny muted">${icon('info', 'xs')} ${esc(tp.note)}</p>` : ''}
+        </div>
+      </div></div>`;
   }
 
   root.NChart = { wheelOf };
