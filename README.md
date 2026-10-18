@@ -1,3 +1,5 @@
 # Saliastro
 
-Закрытая тестовая версия (noindex). Исходники и сборка — у владельца, файлы здесь собираются автоматически (`_dev/build_deploy.py`).
+Сайт переехал: https://saliastro.com/
+
+Здесь только переадресация со старого адреса sneznyj.github.io/saliastro (собирает `_dev/build_deploy.py --mirror`).
