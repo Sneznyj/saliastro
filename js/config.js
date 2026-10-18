@@ -32,7 +32,7 @@ window.NCONFIG = {
   // Аккаунты (необязательный вход): сервер server/account-worker. guestLimit — сколько карточек можно сохранить без входа.
   // Пусто в api — кнопки «Войти» нет, всё только на устройстве.
   account: { api: 'https://natalogy-account.sneznyjpavel.workers.dev', guestLimit: 1 }, // адрес сервера прежний: на него настроены входы Google, Яндекс, VK, Telegram
-  contact: '',
+  contact: 'kruiz255@gmail.com', // почта поддержки (18.10.2026; потом — своя на домене saliastro.com)
   searchIndex: false,             // false — сайт закрыт от поисковиков (noindex), открывают только по ссылке. true — когда будет публичный запуск
   siteUrl: 'https://sneznyj.github.io/saliastro/',
 };
