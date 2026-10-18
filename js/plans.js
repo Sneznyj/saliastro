@@ -1,5 +1,5 @@
 /* Тарифы Saliastro (17.10.2026): Бесплатно → Плюс → Профи → VIP (VIP — с ректификацией).
-   Что где закрыто (NEED), страница #plans (карточки, сравнение, коды, вопросы), окно оплаты (lava.top — рубли, Gumroad — доллары),
+   Что где закрыто (NEED), страница #plans (карточки, сравнение, коды, вопросы), окно оплаты (lava.top — рубли и доллары; Gumroad — запасной для долларов, включается ключами),
    возврат с оплаты (#plans?paid=…) и замки на платных разделах. Пока NCONFIG.plans.enforce = false — всё открыто (бета), а купить уже можно.
    Проверка замков у себя: app.html?plan=free (только на localhost) — как будто тариф «Бесплатно» и замки включены. */
 (function (root) {
@@ -139,6 +139,7 @@
     const err = body.querySelector('.lg-err'), mailF = body.querySelector('[data-mailf]');
     const paint = () => {
       body.querySelectorAll('[data-pp]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pp === period)));
+      body.querySelector('.pay-top .pl-save').textContent = '−' + saving(p, m.cur) + '%'; // выгода года — в валюте выбранного способа
       const v = price(p, period, m.cur), eq = period === 'year' ? perMonth(p, m.cur) : null;
       body.querySelector('[data-price]').innerHTML = `<b>${money(v, m.cur)}</b> <span>${esc(period === 'year' ? t('pl.perYear', 'в год') : t('pl.perMonth', 'в месяц'))}</span>${eq != null ? `<small>${esc(t('pl.eqM', '≈ {m} в месяц · выгода {s}%', { m: money(eq, m.cur), s: saving(p, m.cur) }))}</small>` : ''}`;
       body.querySelector('[data-pbtn]').textContent = t('pay.go', 'Перейти к оплате · {v}', { v: money(v, m.cur) });
@@ -236,9 +237,9 @@
       <tr class="pl-trow-price"><th scope="row">${esc(st.period === 'year' ? t('pl.priceY', 'Цена за год') : t('pl.priceM', 'Цена в месяц'))}</th>${ORDER.map((p) => `<td><b>${p === 'free' ? money(0) : money(price(p, st.period))}</b></td>`).join('')}</tr></tbody></table>`;
   }
   const FAQ = () => [
-    [t('pq.1', 'Как отменить подписку?'), t('pa.1', 'В «Настройки → Тариф» — кнопка «Отменить продление» (оплата в рублях) или «Управлять в Gumroad» (оплата в долларах; та же ссылка есть в письме от Gumroad). Доступ остаётся до конца оплаченного срока.')],
+    [t('pq.1', 'Как отменить подписку?'), t('pa.1', 'В «Настройки → Тариф» — кнопка «Отменить продление». Доступ остаётся до конца оплаченного срока.')],
     [t('pq.2', 'Как оплатить из России?'), t('pa.2', 'Картой российского банка — «Мир», Visa или Mastercard — через платёжный сервис lava.top, в рублях.')],
-    [t('pq.3', 'А из других стран?'), t('pa.3', 'Картой любого банка, PayPal, Apple Pay или Google Pay через Gumroad, в долларах. Налоги вашей страны Gumroad посчитает сам.')],
+    [t('pq.3', 'А из других стран?'), t('pa.3', 'Картой Visa или Mastercard банка любой страны — через тот же платёжный сервис lava.top, в долларах.')],
     [t('pq.4', 'Можно вернуть деньги?'), t('pa.4', 'Да: в течение 14 дней после первой оплаты, если тариф почти не использовался, — напишите нам. Подробно — в «Условиях».')],
     [t('pq.5', 'Безопасно ли это?'), t('pa.5', 'Номер карты вы вводите на странице платёжного сервиса. Мы видим только, что оплата прошла, и почту для чека.')],
     [t('pq.6', 'Что будет, если не продлить?'), t('pa.6', 'Тариф станет бесплатным, но ничего не пропадёт: карточки, сохранённые карты и события для ректификации останутся в аккаунте.')],
@@ -257,7 +258,7 @@
       <div class="pl-grid" id="plGrid"></div>
       <section class="card stack pl-cmp"><h2>${esc(t('pl.cmp', 'Сравнить тарифы'))}</h2><div class="scrollx" id="plTable"></div></section>
       <div class="grid2 pl-bottom">
-        <section class="card stack" id="plCode"><h3>${icon('gift')} ${esc(t('code.h', 'Есть код?'))}</h3><p class="small muted">${esc(t('code.p', 'Подарочный код SAL-XXXX-XXXX или ключ лицензии из письма Gumroad.'))}</p>
+        <section class="card stack" id="plCode"><h3>${icon('gift')} ${esc(t('code.h', 'Есть код?'))}</h3><p class="small muted">${esc(t('code.p', 'Подарочный код вида SAL-XXXX-XXXX.'))}</p>
           <form class="row pl-code" novalidate><input class="input" id="plCodeIn" placeholder="SAL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="${esc(t('code.h', 'Есть код?'))}"><button class="btn" type="submit">${esc(t('code.go', 'Активировать'))}</button></form></section>
         <section class="card stack pl-faq"><h3>${esc(t('pl.faq', 'Вопросы об оплате'))}</h3>${FAQ().map(([q, a]) => `<details><summary>${esc(q)}</summary><p class="small">${esc(a)}</p></details>`).join('')}</section>
       </div>`;
